@@ -1,0 +1,17 @@
+{
+  "name": "sweet-eye-coffee",
+  "private": true,
+  "description": "Sweet Eye Coffee Roasters — Expo app (mobile/) and its API (server/) on the sweet_eye_coffee MySQL database.",
+  "scripts": {
+    "setup": "npm install && npm --prefix server install && npm --prefix mobile install",
+    "dev": "concurrently -k -n api,app -c \"#D4A373,#8FC79B\" \"npm --prefix server run dev\" \"npm --prefix mobile start\"",
+    "api": "npm --prefix server run dev",
+    "app": "npm --prefix mobile start",
+    "web": "npm --prefix mobile run web",
+    "tunnel": "npm --prefix mobile start -- --tunnel",
+    "check": "npm --prefix mobile run typecheck && npm --prefix mobile run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}

@@ -1,0 +1,29 @@
+node_modules/
+
+# Secrets — keep out of version control
+server/.env
+server/.env.*
+!server/.env.example
+.env*.local
+
+# Database dumps hold customer accounts and messages — never push them
+server/database/*.sql
+*.sql.gz
+
+# Local editor / Claude settings
+.claude/
+*.log
+
+# Expo / Metro
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+.metro-health-check*
+
+npm-debug.*
+*.tsbuildinfo
+.DS_Store
+
+# Resized photo cache (rebuilt automatically)
+server/.image-cache/
