@@ -27,8 +27,8 @@ If the phone can't load the app, allow **Node.js** through Windows Firewall when
 
 ## Going live
 
-- **Website + API on the Hostinger VPS:** step-by-step in [deploy/DEPLOY.md](deploy/DEPLOY.md) (nginx + HTTPS, PM2, MariaDB, firewall, backups). One Node process serves the API, the photos and the web app (`npm --prefix mobile run build:web`).
-- **App Store / Google Play:** [deploy/STORES.md](deploy/STORES.md) — EAS cloud builds (`mobile/eas.json`; set your domain in `EXPO_PUBLIC_API_URL`), store listing answers and review notes.
+- **Website + API on the Hostinger VPS (https://app.sweeteyecoffee.com):** step-by-step in [deploy/DEPLOY.md](deploy/DEPLOY.md) — its own folder, port 4600, PM2 process and nginx file, next to the other apps on that VPS; uses the website's Hostinger database through Remote MySQL. One Node process serves the API, the photos and the web app (`npm --prefix mobile run build:web`).
+- **App Store / Google Play:** [deploy/STORES.md](deploy/STORES.md) — EAS cloud builds (`mobile/eas.json` points at https://app.sweeteyecoffee.com), store listing answers and review notes.
 
 Security built in: strict rate limits on sign-in, password reset (codes are discarded after 5 wrong tries), coupons, checkout and contact forms; security headers (CSP, HSTS, no framing); CORS and Stripe return pages locked to your domain; changing a password signs out other devices; changing an email needs the current password; card payments can't be charged twice by double-tapping; staff photo uploads are checked to really be images; Node only listens on 127.0.0.1 behind nginx in production.
 

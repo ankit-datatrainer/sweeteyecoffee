@@ -1,6 +1,6 @@
 # Publishing the iOS and Android apps
 
-The store apps are built in the cloud with **EAS** (Expo Application Services) — no Mac or Android Studio needed. Do the VPS deployment (`deploy/DEPLOY.md`) first: the store apps talk to `https://yourdomain.com`.
+The store apps are built in the cloud with **EAS** (Expo Application Services) — no Mac or Android Studio needed. Do the VPS deployment (`deploy/DEPLOY.md`) first: the store apps talk to `https://app.sweeteyecoffee.com`.
 
 ## What you need
 
@@ -12,7 +12,7 @@ The store apps are built in the cloud with **EAS** (Expo Application Services) �
 
 ## 1. One-time setup
 
-In `mobile/eas.json`, replace `https://yourdomain.com` with your real domain (both places). Then, in the `mobile` folder:
+`mobile/eas.json` already points the apps at `https://app.sweeteyecoffee.com`. In the `mobile` folder:
 
 ```bash
 npm install -g eas-cli
