@@ -69,8 +69,8 @@ cd /var/www/sweeteye
 ## Step 5 — Install and build (takes a few minutes)
 
 ```bash
-npm --prefix server ci --omit=dev
-npm --prefix mobile ci
+npm --prefix server install --omit=dev --no-audit --no-fund
+npm --prefix mobile install --no-audit --no-fund
 npm --prefix mobile run build:web
 ```
 
@@ -195,9 +195,9 @@ On your computer, push the new code to GitHub. Then on the VPS:
 
 ```bash
 cd /var/www/sweeteye
-git pull
-npm --prefix server ci --omit=dev
-npm --prefix mobile ci && npm --prefix mobile run build:web
+git checkout -- . && git pull
+npm --prefix server install --omit=dev --no-audit --no-fund
+npm --prefix mobile install --no-audit --no-fund && npm --prefix mobile run build:web
 pm2 restart sweet-eye
 ```
 
