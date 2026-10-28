@@ -36,10 +36,46 @@ const label12h = (hhmm) => {
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/** Clean a {0..6: [open, close] | null} map; anything invalid falls back to the default for that day. */
+export function normalizeHours(raw, fallback = config.store.hours) {
+  const out = {};
+  for (let d = 0; d < 7; d++) {
+    const v = raw?.[d] ?? raw?.[String(d)];
+    if (v === null) out[d] = null;
+    else if (Array.isArray(v) && HHMM.test(v[0]) && HHMM.test(v[1]) && toMinutes(v[1]) > toMinutes(v[0])) out[d] = [v[0], v[1]];
+    else out[d] = fallback[d] ?? null;
+  }
+  return out;
+}
+
+/** Opening hours by weekday: the staff setting, else the defaults in config. */
+export async function storeHours() {
+  try {
+    const saved = await getSetting('store_hours');
+    return normalizeHours(saved ? JSON.parse(saved) : null);
+  } catch {
+    return normalizeHours(null);
+  }
+}
+
+/** "Sun – Thu: 7:30 AM – 9:00 PM" style rows, grouping neighbouring days with the same times (Sunday first). */
+export function hoursDisplay(hours) {
+  const rows = [];
+  for (let d = 0; d < 7; d++) {
+    const time = hours[d] ? `${label12h(hours[d][0])} – ${label12h(hours[d][1])}` : 'Closed';
+    const last = rows.at(-1);
+    if (last && last.time === time) last.to = d;
+    else rows.push({ from: d, to: d, time });
+  }
+  return rows.map((r) => ({ days: r.from === r.to ? DAY_SHORT[r.from] : `${DAY_SHORT[r.from]} – ${DAY_SHORT[r.to]}`, time: r.time }));
+}
+
 /** Port of App\Support\StoreHours::status — "Open now · until 9:00 PM". */
-export function storeStatus(date = new Date()) {
+export function storeStatus(date = new Date(), hours = config.store.hours) {
   const { dayOfWeek, minutes } = shopClock(date);
-  const hours = config.store.hours;
   const [open, close] = hours[dayOfWeek] ?? [];
 
   if (open && close) {

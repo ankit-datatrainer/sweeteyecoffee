@@ -67,7 +67,7 @@ The Stripe webhook is at `/api/stripe/webhook` (signed with `STRIPE_WEBHOOK_SECR
   - **Categories:** add, edit, switch off, seasonal date windows, menu position
   - **Drink options:** rename, reprice (including the Large price), switch off, add new options
   - **Coupons:** percentage or fixed, minimum order, max discount, max uses, start and expiry
-  - **Settings:** sales tax, curbside on/off, local delivery fee, standard shipping, local ZIP codes
+  - **Settings:** opening hours for each day (or closed), sales tax, curbside on/off, local delivery fee, standard shipping, local ZIP codes
   - **Availability:** quick sold-out and on-menu switches
 
 As on the website, products that have been ordered are hidden instead of deleted. Unlike the old Laravel admin, a category can only be deleted once it's empty — the database would otherwise delete its products and their order history with it. Uploaded photos are saved in `server/public/images/menu/<category>/` like the website did.

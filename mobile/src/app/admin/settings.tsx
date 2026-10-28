@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormSection, SwitchRow, useStaffOnly } from '@/components/admin';
 import { PageScreen } from '@/components/layout';
@@ -9,7 +9,30 @@ import type { ShopSettings } from '@/lib/admin';
 import { errorMessage, get, put } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { useCatalog } from '@/store';
-import { space } from '@/theme';
+import { colors, fonts, space } from '@/theme';
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** "19:30" → "7:30 PM" */
+const to12h = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+};
+
+/** "7:30 pm", "730pm", "7pm", "19:30" → "19:30"; null when it isn't a time. */
+function to24h(text: string): string | null {
+  const m = text.trim().toLowerCase().replace(/\./g, '').match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm|a|p)?$/);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2] ?? 0);
+  const ap = m[3]?.[0];
+  if (min > 59 || h > 23 || (ap && (h < 1 || h > 12))) return null;
+  if (ap === 'p' && h < 12) h += 12;
+  if (ap === 'a' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
+type HoursRow = { day: number; open: string; close: string; closed: boolean };
 
 export default function AdminSettingsScreen() {
   const staff = useStaffOnly();
@@ -21,6 +44,7 @@ export default function AdminSettingsScreen() {
   const [standard, setStandard] = useState('');
   const [zips, setZips] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
+  const [hours, setHours] = useState<HoursRow[]>([]);
 
   const apply = (s: ShopSettings) => {
     setSettings(s);
@@ -28,6 +52,7 @@ export default function AdminSettingsScreen() {
     setLocalFee(s.local_delivery_fee.toFixed(2));
     setStandard(s.standard_shipping_rate.toFixed(2));
     setZips(s.local_delivery_zips.join(', '));
+    setHours(s.store_hours.map((h) => ({ ...h, open: to12h(h.open), close: to12h(h.close) })));
   };
 
   useEffect(() => {
@@ -53,6 +78,23 @@ export default function AdminSettingsScreen() {
     }
   };
 
+  const setDay = (day: number, patch: Partial<HoursRow>) => setHours((rows) => rows.map((r) => (r.day === day ? { ...r, ...patch } : r)));
+
+  const saveHours = () => {
+    const rows = [];
+    for (const r of hours) {
+      if (r.closed) {
+        rows.push({ day: r.day, closed: true, open: '09:00', close: '17:00' });
+        continue;
+      }
+      const open = to24h(r.open);
+      const close = to24h(r.close);
+      if (!open || !close) return toast.error(`${DAYS[r.day]}: please enter times like 7:30 AM.`);
+      rows.push({ day: r.day, closed: false, open, close });
+    }
+    save('hours', { store_hours: rows }, 'Opening hours saved.');
+  };
+
   return (
     <PageScreen title="Shop settings" contentStyle={{ maxWidth: 680 }}>
       {error && <Notice tone="danger">{error}</Notice>}
@@ -61,6 +103,24 @@ export default function AdminSettingsScreen() {
       ) : (
         <Animated.View entering={FadeInDown}>
           <T variant="body">These apply to the app and the website alike — they live in the shop’s database.</T>
+
+          <FormSection title="Opening hours" hint="Shown on the home and contact pages, and used for the “Open now / Closed” badge. Type times like 7:30 AM or 10:30 PM.">
+            <Card style={{ gap: 4 }}>
+              {hours.map((h) => (
+                <View key={h.day} style={{ gap: 8, paddingVertical: 8, borderBottomWidth: h.day === 6 ? 0 : 1, borderColor: colors.line }}>
+                  <SwitchRow label={DAYS[h.day]} sub={h.closed ? 'Closed all day' : `${h.open} – ${h.close}`} value={!h.closed} onChange={(v) => setDay(h.day, { closed: !v })} />
+                  {!h.closed && (
+                    <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                      <Field label="Opens" icon="sunrise" value={h.open} onChangeText={(v) => setDay(h.day, { open: v })} containerStyle={{ flex: 1 }} />
+                      <Text style={{ fontFamily: fonts.medium, color: colors.creamMuted }}>to</Text>
+                      <Field label="Closes" icon="sunset" value={h.close} onChangeText={(v) => setDay(h.day, { close: v })} containerStyle={{ flex: 1 }} />
+                    </View>
+                  )}
+                </View>
+              ))}
+            </Card>
+            <Button title="Save opening hours" icon="clock" loading={busy === 'hours'} onPress={saveHours} style={{ marginTop: space.md }} />
+          </FormSection>
 
           <FormSection title="Sales tax" hint="Charged on items after any coupon. Delivery fees are not taxed.">
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>

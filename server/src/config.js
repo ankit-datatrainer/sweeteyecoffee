@@ -85,20 +85,17 @@ export const config = {
     phoneDisplay: '(901) 310-4293',
     email: 'support@sweeteyecoffee.com',
     timezone: 'America/Chicago',
-    // 0 = Sunday … 6 = Saturday, 24h "HH:mm".
+    // Default opening hours (staff change them in Settings → "store_hours").
+    // 0 = Sunday … 6 = Saturday, 24h "HH:mm"; null = closed all day.
     hours: {
-      0: ['08:00', '21:00'],
-      1: ['08:00', '21:00'],
-      2: ['08:00', '21:00'],
-      3: ['08:00', '21:00'],
-      4: ['08:00', '21:00'],
-      5: ['08:00', '23:00'],
-      6: ['08:00', '23:00'],
+      0: ['07:30', '21:00'],
+      1: ['07:30', '21:00'],
+      2: ['07:30', '21:00'],
+      3: ['07:30', '21:00'],
+      4: ['07:30', '21:00'],
+      5: ['07:30', '22:30'],
+      6: ['07:30', '22:30'],
     },
-    hoursDisplay: [
-      { days: 'Sun – Thu', time: '8:00 AM – 9:00 PM' },
-      { days: 'Fri – Sat', time: '8:00 AM – 11:00 PM' },
-    ],
   },
 
   // Coffee-bean delivery defaults (config/shipping.php); admin settings override them.

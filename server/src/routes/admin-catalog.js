@@ -8,7 +8,7 @@ import { first, query, transaction, nowUtc } from '../db.js';
 import { fail, money, optionalString, requireString } from '../lib/http.js';
 import { baseUrl, forgetImage, imageUrl } from '../lib/catalog.js';
 import { requireAdmin } from '../lib/auth.js';
-import { getSettings } from '../lib/store.js';
+import { getSettings, normalizeHours } from '../lib/store.js';
 import { couponLabel } from '../lib/pricing.js';
 
 /**
@@ -530,7 +530,9 @@ adminCatalogRoutes.delete('/admin/coupons/:id', async (req, res) => {
 
 // ── Shop settings ───────────────────────────────────────────────────────────
 
-const SETTING_KEYS = ['tax_rate', 'curbside_enabled', 'local_delivery_fee', 'standard_shipping_rate', 'local_delivery_zips'];
+const SETTING_KEYS = ['tax_rate', 'curbside_enabled', 'local_delivery_fee', 'standard_shipping_rate', 'local_delivery_zips', 'store_hours'];
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 async function currentSettings() {
   const s = await getSettings(SETTING_KEYS);
@@ -540,6 +542,13 @@ async function currentSettings() {
     local_delivery_fee: Number(s.local_delivery_fee ?? config.shipping.localFee),
     standard_shipping_rate: s.standard_shipping_rate != null && s.standard_shipping_rate !== '' ? Number(s.standard_shipping_rate) : config.shipping.standardRate,
     local_delivery_zips: (s.local_delivery_zips != null ? s.local_delivery_zips.split(/[\s,;]+/).filter(Boolean) : config.shipping.localZips),
+    // Sunday first: { day: 0, open: '07:30', close: '21:00', closed: false }
+    store_hours: (() => {
+      let saved = null;
+      try { saved = s.store_hours ? JSON.parse(s.store_hours) : null; } catch {}
+      const h = normalizeHours(saved);
+      return [0, 1, 2, 3, 4, 5, 6].map((d) => ({ day: d, open: h[d]?.[0] ?? '09:00', close: h[d]?.[1] ?? '17:00', closed: h[d] === null }));
+    })(),
   };
 }
 
@@ -568,6 +577,19 @@ adminCatalogRoutes.put('/admin/settings', async (req, res) => {
     const invalid = zips.filter((z) => !/^\d{5}$/.test(z));
     if (invalid.length) fail(422, `These are not valid 5-digit ZIP codes: ${invalid.slice(0, 10).join(', ')}`);
     changes.push(['local_delivery_zips', [...new Set(zips)].join(',')]);
+  }
+  if (b.store_hours !== undefined) {
+    if (!Array.isArray(b.store_hours) || b.store_hours.length !== 7) fail(422, 'Please send opening hours for all 7 days.');
+    const hours = {};
+    for (const row of b.store_hours) {
+      const d = Number(row?.day);
+      if (!Number.isInteger(d) || d < 0 || d > 6 || d in hours) fail(422, 'Opening hours have an unknown day.');
+      if (row.closed) { hours[d] = null; continue; }
+      if (!HHMM.test(String(row.open)) || !HHMM.test(String(row.close))) fail(422, `${DAY_NAMES[d]}: please enter times like 7:30 AM.`);
+      if (row.close <= row.open) fail(422, `${DAY_NAMES[d]}: closing time must be after opening time.`);
+      hours[d] = [row.open, row.close];
+    }
+    changes.push(['store_hours', JSON.stringify(hours)]);
   }
   if (!changes.length) fail(422, 'Nothing to save.');
   for (const [key, value] of changes) await setSetting(key, value);

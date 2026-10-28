@@ -44,6 +44,8 @@ export type ShopSettings = {
   local_delivery_fee: number;
   standard_shipping_rate: number;
   local_delivery_zips: string[];
+  /** Sunday first; times are 24h "HH:MM". */
+  store_hours: { day: number; open: string; close: string; closed: boolean }[];
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

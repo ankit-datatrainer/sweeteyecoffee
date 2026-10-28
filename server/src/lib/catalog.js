@@ -25,7 +25,8 @@ export function imageUrl(base, relPath, w = 1080) {
     } catch {
       mtime = null;
     }
-    mtimes.set(clean, mtime);
+    // Only remember files that exist, so a photo added later shows up without a restart.
+    if (mtime !== null) mtimes.set(clean, mtime);
   }
   if (mtime === null) return null;
   const url = `${base}/images/${clean.split('/').map(encodeURIComponent).join('/')}?v=${mtime}`;

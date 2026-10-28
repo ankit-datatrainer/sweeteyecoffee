@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { fail } from '../lib/http.js';
 import { baseUrl, priceLine, productById, serializeCategory, serializeProduct, visibleProducts, imageUrl } from '../lib/catalog.js';
-import { storeStatus, taxRate, curbsideEnabled } from '../lib/store.js';
+import { storeStatus, storeHours, hoursDisplay, taxRate, curbsideEnabled } from '../lib/store.js';
 import { shippingSettings } from '../lib/pricing.js';
 import { squareConfigured } from '../lib/square.js';
 import { enabledStripeMethods } from '../lib/stripe.js';
@@ -13,6 +13,7 @@ export const catalogRoutes = Router();
 catalogRoutes.get('/store', async (req, res) => {
   const base = baseUrl(req);
   const shipping = await shippingSettings();
+  const hours = await storeHours();
   const { store, square, paymentsMode } = config;
   res.json({
     name: store.name,
@@ -22,8 +23,8 @@ catalogRoutes.get('/store', async (req, res) => {
     phone_display: store.phoneDisplay,
     email: store.email,
     timezone: store.timezone,
-    hours: store.hoursDisplay,
-    status: storeStatus(),
+    hours: hoursDisplay(hours),
+    status: storeStatus(new Date(), hours),
     directions_url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`Sweet Eye Coffee, ${store.address}`)}`,
     tax_rate: await taxRate(),
     curbside_enabled: await curbsideEnabled(),
