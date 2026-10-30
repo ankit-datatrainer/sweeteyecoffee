@@ -7,6 +7,9 @@ module.exports = {
       name: 'sweet-eye',
       cwd: __dirname + '/../server',
       script: 'src/index.js',
+      // Hostinger Remote MySQL allowlists this VPS's IPv4 address.
+      // Prefer it when the database hostname also resolves to IPv6.
+      node_args: '--dns-result-order=ipv4first',
       instances: 1,
       exec_mode: 'fork',
       env: { NODE_ENV: 'production' },
