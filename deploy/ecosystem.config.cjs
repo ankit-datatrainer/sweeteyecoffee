@@ -8,8 +8,8 @@ module.exports = {
       cwd: __dirname + '/../server',
       script: 'src/index.js',
       // Hostinger Remote MySQL allowlists this VPS's IPv4 address.
-      // Prefer it when the database hostname also resolves to IPv6.
-      node_args: '--dns-result-order=ipv4first',
+      // Prefer it and disable Node's automatic IPv6 fallback under load.
+      node_args: '--dns-result-order=ipv4first --no-network-family-autoselection',
       instances: 1,
       exec_mode: 'fork',
       env: { NODE_ENV: 'production' },
