@@ -105,6 +105,8 @@ export default function OrderScreen() {
               </View>
               {order.delivery_address && <Meta icon="map-pin" text={order.delivery_address} />}
               {order.vehicle_details && <Meta icon="truck" text={order.vehicle_details} />}
+              {order.shipment?.tracking.map((tracking) => <Button key={tracking} title={`Track UPS · ${tracking}`} variant="outline" size="md" onPress={() => Linking.openURL(`https://www.ups.com/track?tracknum=${encodeURIComponent(tracking)}`)} />)}
+              {order.notes?.includes('TEST subscription') && <Notice>TEST subscription order — do not fulfill or ship.</Notice>}
             </Card>
           </Animated.View>
 

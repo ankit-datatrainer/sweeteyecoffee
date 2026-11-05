@@ -106,6 +106,8 @@ export default function AdminScreen() {
         <ManageTile icon="sliders" label="Drink options" sub="Milk, flavours, add-ons" onPress={() => router.push('/admin/options')} />
         <ManageTile icon="tag" label="Coupons" sub="Discount codes" onPress={() => router.push('/admin/coupons')} />
         <ManageTile icon="settings" label="Settings" sub="Tax, curbside, delivery" onPress={() => router.push('/admin/settings')} />
+        <ManageTile icon="repeat" label="Subscriptions" sub="Plans and billing status" onPress={() => router.push('/admin/subscriptions')} />
+        {user?.role === 'super_admin' && <ManageTile icon="file-text" label="Website & app pages" sub="Text, photos and sections" onPress={() => router.push('/admin/pages')} />}
       </View>
 
       <T variant="overline" style={{ marginTop: space.xxl }}>Orders</T>

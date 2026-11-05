@@ -9,7 +9,9 @@
     "app": "npm --prefix mobile start",
     "web": "npm --prefix mobile run web",
     "tunnel": "npm --prefix mobile start -- --tunnel",
-    "check": "npm --prefix mobile run typecheck && npm --prefix mobile run lint"
+    "check": "npm --prefix mobile run typecheck && npm --prefix mobile run lint",
+    "test": "npm --prefix server test",
+    "db:migrate": "npm --prefix server run migrate"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

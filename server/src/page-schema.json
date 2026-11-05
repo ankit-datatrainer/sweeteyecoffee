@@ -1,0 +1,663 @@
+{
+    "home": {
+        "title": "Homepage",
+        "route": "home",
+        "icon": "home",
+        "note": "Opening hours, address and the products shown come from Settings and Products.",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Globally Sourced · Locally Roasted"
+                    ],
+                    "title": [
+                        "text",
+                        "Title — first line",
+                        "Exceptional Coffee,"
+                    ],
+                    "title_highlight": [
+                        "text",
+                        "Title — second line (gold)",
+                        "Crafted for You"
+                    ],
+                    "subtitle": [
+                        "textarea",
+                        "Text under the title",
+                        "Hand-selected beans from premium estates across 15 countries, roasted in small batches to unlock their full potential."
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=80"
+                    ]
+                }
+            },
+            "stats": {
+                "label": "Numbers under the banner",
+                "hideable": true,
+                "fields": {
+                    "stat1_value": [
+                        "text",
+                        "Number 1",
+                        "15+"
+                    ],
+                    "stat1_label": [
+                        "text",
+                        "Number 1 label",
+                        "Origins"
+                    ],
+                    "stat2_value": [
+                        "text",
+                        "Number 2",
+                        "10K+"
+                    ],
+                    "stat2_label": [
+                        "text",
+                        "Number 2 label",
+                        "Customers"
+                    ],
+                    "stat3_value": [
+                        "text",
+                        "Number 3",
+                        "4.9"
+                    ],
+                    "stat3_label": [
+                        "text",
+                        "Number 3 label",
+                        "Rating"
+                    ]
+                }
+            },
+            "categories": {
+                "label": "\"Explore the Menu\" categories",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Our Selection"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Explore the Menu"
+                    ]
+                }
+            },
+            "featured": {
+                "label": "Featured products",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Bestsellers"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Featured Favorites"
+                    ]
+                }
+            },
+            "why": {
+                "label": "\"The Difference\" (3 reasons)",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Why Sweet Eye"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "The Difference"
+                    ],
+                    "item1_title": [
+                        "text",
+                        "Reason 1 — title",
+                        "Globally Sourced"
+                    ],
+                    "item1_text": [
+                        "textarea",
+                        "Reason 1 — text",
+                        "We partner with farms across 15+ countries to bring you the most exceptional beans the world has to offer."
+                    ],
+                    "item2_title": [
+                        "text",
+                        "Reason 2 — title",
+                        "Locally Roasted"
+                    ],
+                    "item2_text": [
+                        "textarea",
+                        "Reason 2 — text",
+                        "Every batch is small-batch roasted in our local micro-roastery to ensure maximum freshness and flavor."
+                    ],
+                    "item3_title": [
+                        "text",
+                        "Reason 3 — title",
+                        "Crafted with Care"
+                    ],
+                    "item3_text": [
+                        "textarea",
+                        "Reason 3 — text",
+                        "Our expert baristas craft every drink with precision and care, ensuring a perfect experience with every sip."
+                    ]
+                }
+            },
+            "cta": {
+                "label": "Bottom banner (\"Ready to experience…\")",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Your perfect cup awaits"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Ready to experience the Sweet Eye difference?"
+                    ],
+                    "text": [
+                        "textarea",
+                        "Text",
+                        "Order now and enjoy fresh roasts, handcrafted drinks, and artisan snacks — all just a click away."
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=1920&q=80"
+                    ]
+                }
+            }
+        }
+    },
+    "about": {
+        "title": "About Us",
+        "route": "about",
+        "icon": "info",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Our Story"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "About Sweet Eye Coffee"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "Imported Globally, Roasted Locally"
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "gallery/IMG_1899.jpg"
+                    ]
+                }
+            },
+            "story": {
+                "label": "\"Who We Are\"",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Who We Are"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Exceptional Coffee Starts with Exceptional Quality"
+                    ],
+                    "body": [
+                        "markdown",
+                        "Text",
+                        "We pride ourselves on providing only quality, specialty coffees. As coffee enthusiasts, we've decided we have let too many years pass by drinking ordinary coffee.\n\nUnlike most other coffees you find in big box stores, Sweet Eye Coffee was founded with freshness and quality at its foundation. Every batch is carefully selected and roasted to order!\n\nCoffee beans are actually seeds from coffee cherries grown all over the world. Different origins produce varying flavors based on climate, altitude, and harvesting methods. Sweet Eye Coffee imports only Grade A specialty beans that are thoroughly inspected for defects before roasting."
+                    ],
+                    "image": [
+                        "image",
+                        "Photo",
+                        "gallery/IMG_2008.jpg"
+                    ]
+                }
+            },
+            "process": {
+                "label": "\"Roasted to Order\"",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Our Process"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Roasted to Order"
+                    ],
+                    "body": [
+                        "markdown",
+                        "Text",
+                        "A key differentiator is our \"roast-to-order\" approach. Unlike mass-market supermarket coffee roasted months or years in advance, Sweet Eye roasts each batch only after customers place orders, ensuring maximum freshness and vibrant flavors.\n\nWith all variations of roasts and grinds available, you'll find a coffee you call yours. There are no shortcuts around quality."
+                    ],
+                    "image": [
+                        "image",
+                        "Photo",
+                        "gallery/IMG_1924.jpg"
+                    ]
+                }
+            },
+            "values": {
+                "label": "\"What Sets Us Apart\" (3 values)",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Our Values"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "What Sets Us Apart"
+                    ],
+                    "item1_title": [
+                        "text",
+                        "Value 1 — title",
+                        "Globally Sourced"
+                    ],
+                    "item1_text": [
+                        "textarea",
+                        "Value 1 — text",
+                        "We select premium, specialty-grade beans from the ripest cherries across the world's finest growing regions."
+                    ],
+                    "item2_title": [
+                        "text",
+                        "Value 2 — title",
+                        "Locally Roasted"
+                    ],
+                    "item2_text": [
+                        "textarea",
+                        "Value 2 — text",
+                        "Every batch is small-batch roasted fresh to order, never sitting on shelves for months like store-bought coffee."
+                    ],
+                    "item3_title": [
+                        "text",
+                        "Value 3 — title",
+                        "Quality Inspected"
+                    ],
+                    "item3_text": [
+                        "textarea",
+                        "Value 3 — text",
+                        "Only Grade A specialty beans make the cut. Every bean is thoroughly inspected for defects before roasting."
+                    ]
+                }
+            }
+        }
+    },
+    "gallery": {
+        "title": "Gallery",
+        "route": "gallery",
+        "icon": "image",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "A Glimpse Inside"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Our Gallery"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "Moments from Sweet Eye Coffee House"
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "gallery/IMG_1994.jpg"
+                    ]
+                }
+            },
+            "photos": {
+                "label": "Photos",
+                "fields": {
+                    "items": [
+                        "gallery",
+                        "Gallery photos",
+                        [
+                            {
+                                "src": "gallery/IMG_2008.jpg",
+                                "caption": "Sweet Eye Coffee House"
+                            },
+                            {
+                                "src": "gallery/IMG_1801.jpg",
+                                "caption": "Coffee preparation"
+                            },
+                            {
+                                "src": "gallery/IMG_1852.jpg",
+                                "caption": "Fresh coffee beans"
+                            },
+                            {
+                                "src": "gallery/IMG_1924.jpg",
+                                "caption": "Coffee roasting"
+                            },
+                            {
+                                "src": "gallery/IMG_1849.jpg",
+                                "caption": "Barista at work"
+                            },
+                            {
+                                "src": "gallery/IMG_1899.jpg",
+                                "caption": "Coffee shop interior"
+                            },
+                            {
+                                "src": "gallery/IMG_1994.jpg",
+                                "caption": "Latte art"
+                            },
+                            {
+                                "src": "gallery/IMG_1917.jpg",
+                                "caption": "Coffee brewing"
+                            },
+                            {
+                                "src": "gallery/IMG_1892.jpg",
+                                "caption": "Sweet Eye ambiance"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "social": {
+                "label": "\"See More on Social Media\"",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Follow Our Journey"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "See More on Social Media"
+                    ],
+                    "text": [
+                        "textarea",
+                        "Text",
+                        "Follow us on Instagram and Facebook for daily updates, behind-the-scenes content, and more."
+                    ],
+                    "instagram": [
+                        "url",
+                        "Instagram link",
+                        "https://www.instagram.com/sweeteyecoffee/"
+                    ],
+                    "facebook": [
+                        "url",
+                        "Facebook link",
+                        "https://www.facebook.com/sweeteyecoffee/"
+                    ]
+                }
+            }
+        }
+    },
+    "contact": {
+        "title": "Contact",
+        "route": "contact",
+        "icon": "map-pin",
+        "note": "Address, phone, email and opening hours come from Settings.",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Get in Touch"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Contact Us"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "We'd love to hear from you"
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "gallery/IMG_1892.jpg"
+                    ]
+                }
+            },
+            "form": {
+                "label": "Message form",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Reach Out"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Send Us a Message"
+                    ]
+                }
+            },
+            "info": {
+                "label": "Contact details",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Info"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Get In Touch"
+                    ],
+                    "instagram": [
+                        "url",
+                        "Instagram link",
+                        "https://www.instagram.com/sweeteyecoffee/"
+                    ],
+                    "facebook": [
+                        "url",
+                        "Facebook link",
+                        "https://www.facebook.com/sweeteyecoffee/"
+                    ]
+                }
+            },
+            "map": {
+                "label": "Map",
+                "hideable": true,
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line",
+                        "Find Us"
+                    ],
+                    "heading": [
+                        "text",
+                        "Heading",
+                        "Our Location"
+                    ]
+                }
+            }
+        }
+    },
+    "menu": {
+        "title": "Menu",
+        "route": "menu",
+        "icon": "book-open",
+        "note": "The products themselves are managed in Products.",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Handcrafted Beverages & Treats"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Our Menu"
+                    ],
+                    "background": [
+                        "image",
+                        "Background photo",
+                        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1920&q=80"
+                    ]
+                }
+            }
+        }
+    },
+    "privacy": {
+        "title": "Privacy Policy",
+        "route": "privacy",
+        "icon": "scale",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Legal"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Privacy Policy"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "How we collect, use, and protect your information"
+                    ]
+                }
+            },
+            "body": {
+                "label": "Page text",
+                "fields": {
+                    "updated": [
+                        "text",
+                        "\"Last updated\" date",
+                        "May 14, 2026"
+                    ],
+                    "text": [
+                        "markdown",
+                        "Full text",
+                        "## 1. Introduction\n\nSweet Eye Coffee Roasters (\"we,\" \"us,\" or \"our\") is committed to protecting the privacy of our customers. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, place an order, or interact with us in any way. By using our website, you consent to the practices described in this policy.\n\n## 2. Information We Collect\n\nWe may collect the following types of information:\n\n### Personal Information\n\n- Full name\n- Email address\n- Phone number\n- Shipping and billing address\n- Payment information (processed securely through our payment processor)\n- Account credentials (if you create an account)\n\n### Automatically Collected Information\n\n- IP address and browser type\n- Device information and operating system\n- Pages visited, time spent, and navigation patterns\n- Referring website or source\n- Cookies and similar tracking technologies\n\n## 3. How We Use Your Information\n\nWe use the information we collect for the following purposes:\n\n- To process and fulfill your orders, including shipping and delivery\n- To communicate with you about your orders, account, or inquiries\n- To send promotional emails, newsletters, and special offers (with your consent)\n- To improve our website, products, and customer experience\n- To detect and prevent fraud or unauthorized activity\n- To comply with legal obligations\n\n## 4. How We Share Your Information\n\nWe do not sell your personal information to third parties. We may share your information with:\n\n- **Service providers:** Payment processors, shipping carriers, email marketing platforms, and website hosting services that help us operate our business\n- **Legal compliance:** When required by law, regulation, or legal process\n- **Business transfers:** In connection with a merger, acquisition, or sale of assets\n\n## 5. Cookies and Tracking Technologies\n\nOur website uses cookies and similar technologies to enhance your browsing experience. These include:\n\n- **Essential cookies:** Required for core website functionality such as shopping cart and checkout\n- **Analytics cookies:** Help us understand how visitors interact with our website\n- **Marketing cookies:** Used to deliver relevant advertisements and measure campaign effectiveness\n\nYou can control cookie preferences through your browser settings. Disabling certain cookies may affect website functionality.\n\n## 6. Data Security\n\nWe implement commercially reasonable security measures to protect your personal information, including encryption of sensitive data during transmission (SSL/TLS), secure payment processing, and restricted access to personal data. However, no method of electronic transmission or storage is 100% secure, and we cannot guarantee absolute security.\n\n## 7. Data Retention\n\nWe retain your personal information for as long as necessary to fulfill the purposes outlined in this policy, comply with legal obligations, resolve disputes, and enforce our agreements. Order records are retained for accounting and tax purposes as required by law.\n\n## 8. Your Rights\n\nDepending on your location, you may have the following rights regarding your personal information:\n\n- Access the personal data we hold about you\n- Request correction of inaccurate information\n- Request deletion of your personal data\n- Opt out of marketing communications at any time\n- Request a copy of your data in a portable format\n\nTo exercise any of these rights, please contact us at [support@sweeteyecoffee.com](mailto:support@sweeteyecoffee.com).\n\n## 9. Third-Party Links\n\nOur website may contain links to third-party websites. We are not responsible for the privacy practices or content of those websites. We encourage you to review the privacy policies of any third-party sites you visit.\n\n## 10. Children's Privacy\n\nOur website is not directed to individuals under the age of 13. We do not knowingly collect personal information from children. If we become aware that we have collected information from a child under 13, we will take steps to delete that information promptly.\n\n## 11. Changes to This Policy\n\nWe reserve the right to update this Privacy Policy at any time. Changes will be posted on this page with an updated \"Last updated\" date. Your continued use of our website after changes are posted constitutes your acceptance of the revised policy.\n\n## 12. Contact Us\n\nIf you have any questions or concerns about this Privacy Policy, please contact us:\n\n**Sweet Eye Coffee Roasters**  \n1140 N Germantown Pkwy Ste 115  \nCordova, TN 38016  \nEmail: [support@sweeteyecoffee.com](mailto:support@sweeteyecoffee.com)"
+                    ]
+                }
+            }
+        }
+    },
+    "terms": {
+        "title": "Terms & Conditions",
+        "route": "terms",
+        "icon": "scale",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Legal"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Terms & Conditions"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "Please read these terms carefully before using our website"
+                    ]
+                }
+            },
+            "body": {
+                "label": "Page text",
+                "fields": {
+                    "updated": [
+                        "text",
+                        "\"Last updated\" date",
+                        "May 14, 2026"
+                    ],
+                    "text": [
+                        "markdown",
+                        "Full text",
+                        "## 1. Acceptance of Terms\n\nBy accessing or using the Sweet Eye Coffee Roasters website (\"Site\"), placing an order, or engaging with any of our services, you agree to be bound by these Terms & Conditions (\"Terms\"). If you do not agree to these Terms, please do not use our Site or services. We reserve the right to modify these Terms at any time, and your continued use of the Site constitutes acceptance of any changes.\n\n## 2. Products and Descriptions\n\nWe make every effort to display our coffee products accurately, including descriptions, images, and pricing. However, we do not guarantee that product descriptions, images, pricing, or other content on the Site is completely accurate, current, or error-free. Colors and appearance of products may vary slightly due to monitor display settings. We reserve the right to correct any errors, inaccuracies, or omissions and to change or update information at any time without prior notice.\n\n## 3. Orders and Pricing\n\nAll orders placed through our Site are subject to acceptance and availability. We reserve the right to:\n\n- Refuse or cancel any order for any reason, including suspected fraud\n- Limit the quantity of items purchased per person, household, or order\n- Correct pricing errors, even after an order has been placed\n- Discontinue any product without notice\n\nPrices are listed in US dollars and do not include applicable taxes or shipping costs, which will be calculated at checkout. We reserve the right to change prices at any time without prior notice. Price changes will not affect orders that have already been confirmed.\n\n## 4. Payment\n\nWe accept major credit cards, debit cards, and other payment methods as displayed at checkout. By submitting your payment information, you represent and warrant that you are authorized to use the payment method provided. All payments are processed securely through our third-party payment processor. We do not store your full credit card information on our servers.\n\n## 5. Shipping and Delivery\n\nBecause our coffee is roasted to order, please allow processing time before shipment. Shipping times and costs vary based on your location and selected shipping method. Estimated delivery dates are not guaranteed.\n\n- Risk of loss and title for items pass to you upon delivery to the carrier\n- We are not responsible for delays caused by shipping carriers, weather, or other circumstances beyond our control\n- It is your responsibility to provide accurate shipping information\n- Additional charges may apply for re-shipment due to incorrect addresses provided by the customer\n\n## 6. Account Registration\n\nYou may be required to create an account to access certain features of the Site. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account. We reserve the right to suspend or terminate accounts that violate these Terms.\n\n## 7. Intellectual Property\n\nAll content on this Site, including but not limited to text, graphics, logos, images, product descriptions, and software, is the property of Sweet Eye Coffee Roasters or its licensors and is protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, modify, create derivative works from, or publicly display any content from this Site without our prior written consent.\n\n## 8. Prohibited Conduct\n\nWhen using our Site, you agree not to:\n\n- Use the Site for any unlawful purpose or in violation of any applicable laws\n- Attempt to gain unauthorized access to any part of the Site or its systems\n- Interfere with the proper functioning of the Site\n- Use automated tools (bots, scrapers, etc.) to access or collect data from the Site\n- Submit false or misleading information\n- Impersonate any person or entity\n\n## 9. Limitation of Liability\n\nTo the fullest extent permitted by law, Sweet Eye Coffee Roasters, its owners, employees, and affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from or related to your use of the Site or purchase of our products. Our total liability for any claim arising from these Terms or your use of the Site shall not exceed the amount you paid for the specific product or service giving rise to the claim.\n\n## 10. Disclaimer of Warranties\n\nThe Site and all products are provided \"as is\" and \"as available\" without warranties of any kind, either express or implied. We disclaim all warranties, including but not limited to implied warranties of merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the Site will be uninterrupted, error-free, or free of viruses or other harmful components.\n\n## 11. Indemnification\n\nYou agree to indemnify, defend, and hold harmless Sweet Eye Coffee Roasters and its officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, costs, or expenses (including reasonable attorneys' fees) arising from your use of the Site, violation of these Terms, or infringement of any third-party rights.\n\n## 12. Governing Law\n\nThese Terms shall be governed by and construed in accordance with the laws of the State of Tennessee, without regard to its conflict of law provisions. Any disputes arising from these Terms or your use of the Site shall be resolved exclusively in the state or federal courts located in Shelby County, Tennessee.\n\n## 13. Severability\n\nIf any provision of these Terms is found to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect.\n\n## 14. Contact Us\n\nIf you have any questions about these Terms & Conditions, please contact us:\n\n**Sweet Eye Coffee Roasters**  \n1140 N Germantown Pkwy Ste 115  \nCordova, TN 38016  \nEmail: [support@sweeteyecoffee.com](mailto:support@sweeteyecoffee.com)"
+                    ]
+                }
+            }
+        }
+    },
+    "refund": {
+        "title": "Refund Policy",
+        "route": "refund",
+        "icon": "scale",
+        "sections": {
+            "hero": {
+                "label": "Top banner",
+                "fields": {
+                    "overline": [
+                        "text",
+                        "Small line above the title",
+                        "Legal"
+                    ],
+                    "title": [
+                        "text",
+                        "Title",
+                        "Refund Policy"
+                    ],
+                    "subtitle": [
+                        "text",
+                        "Text under the title",
+                        "Our commitment to your satisfaction"
+                    ]
+                }
+            },
+            "body": {
+                "label": "Page text",
+                "fields": {
+                    "updated": [
+                        "text",
+                        "\"Last updated\" date",
+                        "May 14, 2026"
+                    ],
+                    "text": [
+                        "markdown",
+                        "Full text",
+                        "## 1. Our Satisfaction Guarantee\n\nAt Sweet Eye Coffee Roasters, we take great pride in the quality of our coffee. Every batch is carefully selected, roasted to order, and inspected before shipping. Your satisfaction is important to us, and we stand behind the quality of our products. If you are not completely satisfied with your purchase, please review the guidelines below.\n\n## 2. Eligibility for Refunds\n\nWe offer refunds or replacements under the following circumstances:\n\n- **Damaged products:** Items that arrive damaged, broken, or in unusable condition during shipping\n- **Incorrect orders:** If you receive the wrong product, roast level, or grind type\n- **Quality issues:** Products that are defective or do not meet our stated quality standards\n- **Missing items:** If items from your order are missing upon delivery\n\n## 3. Refund Request Timeline\n\nTo be eligible for a refund, you must contact us within **14 days** of receiving your order. Requests made after this period may not be eligible for a refund or replacement. Please contact us as soon as possible after discovering any issue with your order.\n\n## 4. How to Request a Refund\n\nTo initiate a refund or replacement, please contact us with the following information:\n\n- Your order number\n- The email address used to place the order\n- A description of the issue\n- Photos of the damaged or incorrect product (if applicable)\n\nSend your request to [support@sweeteyecoffee.com](mailto:support@sweeteyecoffee.com) with the subject line \"Refund Request - [Your Order Number].\" Our team will review your request and respond within 2-3 business days.\n\n## 5. Refund Options\n\nOnce your refund request is approved, we will offer one of the following resolutions:\n\n- **Full refund:** A refund to the original payment method for the affected item(s)\n- **Replacement:** A complimentary replacement shipment of the correct or undamaged product\n- **Store credit:** Credit applied to your account for future purchases\n\nThe resolution offered will depend on the nature of the issue and product availability.\n\n## 6. Non-Refundable Items\n\nDue to the perishable nature of coffee and food safety considerations, the following are generally not eligible for refunds:\n\n- Products that have been opened and partially consumed where the complaint is based on personal taste preference\n- Orders where the customer provided an incorrect shipping address\n- Products not purchased directly from our website\n- Gift cards or promotional items\n\n## 7. Shipping Costs\n\nIf the refund or replacement is due to our error (wrong item, damaged product, or quality issue), we will cover all return shipping costs and reship at no additional charge. If you wish to return a product for any other reason, shipping costs are the responsibility of the customer and original shipping fees are non-refundable.\n\n## 8. Refund Processing Time\n\nOnce approved, refunds will be processed within 5-7 business days. The refund will be credited to the original payment method used at checkout. Please note that it may take an additional 3-5 business days for the refund to appear on your bank or credit card statement, depending on your financial institution.\n\n## 9. Order Cancellations\n\nBecause our coffee is roasted to order, we begin processing orders promptly. If you need to cancel an order, please contact us as soon as possible. Orders that have not yet entered the roasting process can be cancelled for a full refund. Once roasting has begun, the order cannot be cancelled, but you may be eligible for a return under the terms outlined above.\n\n## 10. Exchanges\n\nWe handle exchanges on a case-by-case basis. If you would like to exchange a product for a different roast, blend, or grind type, please contact us and we will do our best to accommodate your request. Exchanges are subject to product availability and may involve additional shipping charges.\n\n## 11. Contact Us\n\nIf you have any questions about our Refund Policy or need assistance with an order, please do not hesitate to reach out:\n\n**Sweet Eye Coffee Roasters**  \n1140 N Germantown Pkwy Ste 115  \nCordova, TN 38016  \nEmail: [support@sweeteyecoffee.com](mailto:support@sweeteyecoffee.com)"
+                    ]
+                }
+            }
+        }
+    }
+}

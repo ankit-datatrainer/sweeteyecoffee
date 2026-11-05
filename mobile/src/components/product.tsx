@@ -15,6 +15,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { money } from '@/lib/format';
+import { exploreSubscription } from '@/lib/subscriptions';
 import type { Product } from '@/lib/types';
 import { colors, fonts, radius, springs } from '@/theme';
 import { openQuickAdd } from '@/store/quick-add';
@@ -27,22 +28,34 @@ export const priceLabel = (p: Product) => money(p.starting_price);
 
 /** Grid card used on the menu. */
 export function ProductCard({ product, index = 0, width }: { product: Product; index?: number; width: number }) {
+  const showBoth = Boolean(product.image && product.iced_image);
   return (
     <Animated.View entering={FadeInDown.delay(Math.min(index, 8) * 55).springify().damping(18)} style={{ width }}>
       <PressableScale onPress={() => openProduct(product)} scaleTo={0.965} style={styles.card}>
-        <View style={[styles.imageWrap, { height: width * 1.05 }]}>
-          <Photo uri={product.image} width={540} style={StyleSheet.absoluteFill} transition={350} />
-          <LinearGradient colors={['transparent', 'rgba(14,8,6,0.85)']} style={styles.imageFade} />
+        <View style={[styles.imageWrap, { height: width * (showBoth ? 0.82 : 1.05) }]}>
+          {showBoth ? (
+            <View style={styles.photoSplit}>
+              {([
+                { label: 'ICED', uri: product.iced_image, icon: 'cloud-snow', color: '#087DA6' },
+                { label: 'HOT', uri: product.image, icon: 'sun', color: '#B44820' },
+              ] as const).map((photo, i) => (
+                <View key={photo.label} style={[styles.photoPane, i === 0 && styles.photoDivider]}
+                  accessible accessibilityRole="image" accessibilityLabel={`${product.name} — ${photo.label.toLowerCase()}`}>
+                  <Photo uri={photo.uri} width={540} style={StyleSheet.absoluteFill} transition={350} />
+                  <View style={[styles.temperatureBadge, i === 0 ? { left: 6 } : { right: 6 }]}>
+                    <Icon name={photo.icon} size={11} color={photo.color} />
+                    <Text style={[styles.temperatureLabel, { color: photo.color }]}>{photo.label}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Photo uri={product.image} width={540} style={StyleSheet.absoluteFill} contentFit={product.is_beans ? 'contain' : 'cover'} transition={350} />
+          )}
+          {!showBoth && !product.is_beans && <LinearGradient colors={['transparent', 'rgba(14,8,6,0.85)']} style={styles.imageFade} />}
           {product.is_sold_out && (
             <View style={styles.soldOut}>
               <Text style={styles.soldOutText}>SOLD OUT</Text>
-            </View>
-          )}
-          {product.iced_image && !product.is_sold_out && (
-            <View style={styles.hotIced}>
-              <Icon name="sun" size={10} color={colors.goldLight} />
-              <Text style={styles.hotIcedText}>/</Text>
-              <Icon name="cloud-snow" size={10} color={colors.info} />
             </View>
           )}
           {/* "+" opens the quick customise-and-add sheet; tapping anywhere else opens the full item. */}
@@ -56,13 +69,14 @@ export function ProductCard({ product, index = 0, width }: { product: Product; i
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={`Customise and add ${product.name}`}
-            style={styles.addFab}>
+            style={[styles.addFab, showBoth && { top: 10, bottom: undefined }]}>
             <Icon name="plus" size={18} color={colors.espresso} />
           </PressableScale>
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.cardName} numberOfLines={2}>{product.name}</Text>
           <Text style={styles.cardPrice}>{priceLabel(product)}</Text>
+          {product.is_beans && product.orderable && <Text style={{ color: colors.gold, fontFamily: fonts.semibold, fontSize: 12, marginTop: 8 }} onPress={(e) => { e.stopPropagation(); exploreSubscription({ product_id: product.id }); }}>Explore subscription</Text>}
         </View>
       </PressableScale>
     </Animated.View>
@@ -153,19 +167,21 @@ const styles = StyleSheet.create({
     borderColor: colors.danger,
   },
   soldOutText: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 1.4, color: colors.danger },
-  hotIced: {
+  photoSplit: { flex: 1, flexDirection: 'row' },
+  photoPane: { flex: 1, overflow: 'hidden' },
+  photoDivider: { borderRightWidth: 1, borderColor: 'rgba(255,255,255,0.8)' },
+  temperatureBadge: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    bottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(14,8,6,0.65)',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  hotIcedText: { color: colors.creamFaint, fontSize: 10 },
+  temperatureLabel: { fontFamily: fonts.bold, fontSize: 10, letterSpacing: 0.4 },
   addFab: {
     position: 'absolute',
     right: 10,

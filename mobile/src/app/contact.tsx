@@ -8,8 +8,11 @@ import { errorMessage, post } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { useAuth, useCatalog } from '@/store';
 import { colors, space } from '@/theme';
+import { usePage, openPageLink } from '@/lib/pages';
+import { ExtraSections, PageHero } from '@/components/page-content';
 
 export default function ContactScreen() {
+  const c = usePage('contact');
   const user = useAuth((s) => s.user);
   const store = useCatalog((s) => s.store);
   const [form, setForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', phone: user?.phone ?? '', message: '' });
@@ -33,7 +36,8 @@ export default function ContactScreen() {
   };
 
   return (
-    <PageScreen title="Contact us" contentStyle={{ maxWidth: 720 }}>
+    <PageScreen title={c.text('hero.title', 'Contact us')} contentStyle={{ maxWidth: 720 }}>
+      <PageHero page="contact" />
       {store && (
         <Animated.View entering={FadeInDown} style={styles.quick}>
           {[
@@ -57,7 +61,8 @@ export default function ContactScreen() {
         </Animated.View>
       ) : (
         <Animated.View entering={FadeInDown.delay(100)} style={{ gap: 12, marginTop: space.xl }}>
-          <T variant="overline">Send a message</T>
+          <T variant="overline">{c.text('form.overline', 'Reach out')}</T>
+          <T variant="heading">{c.text('form.heading', 'Send us a message')}</T>
           <Field label="Your name" icon="user" value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
           <Field label="Email" icon="mail" value={form.email} onChangeText={(v) => setForm({ ...form, email: v })} keyboardType="email-address" autoCapitalize="none" />
           <Field label="Phone (optional)" icon="phone" value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" />
@@ -69,7 +74,8 @@ export default function ContactScreen() {
 
       {store && (
         <Card style={{ marginTop: space.xxl, gap: 8 }}>
-          <T variant="heading">Opening hours</T>
+          <T variant="overline">{c.text('info.overline')}</T>
+          <T variant="heading">{c.text('info.heading', 'Opening hours')}</T>
           {store.hours.map((h) => (
             <View key={h.days} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <T variant="body">{h.days}</T>
@@ -79,6 +85,9 @@ export default function ContactScreen() {
           <T variant="small" style={{ marginTop: 6 }}>{store.address}</T>
         </Card>
       )}
+      <View style={{ gap: 10, marginTop: space.xl }}>{['instagram','facebook'].map((key) => !!c.text(`info.${key}`) && <Button key={key} title={key === 'instagram' ? 'Instagram' : 'Facebook'} variant="outline" onPress={() => openPageLink(c.text(`info.${key}`))} />)}</View>
+      {store && c.visible('map') && <Card style={{ gap: 10, marginTop: space.xl }}><T variant="overline">{c.text('map.overline')}</T><T variant="heading">{c.text('map.heading')}</T><T variant="body">{store.address}</T><Button title="Open map & directions" onPress={() => Linking.openURL(store.directions_url)} /></Card>}
+      <ExtraSections sections={c.sections} />
     </PageScreen>
   );
 }

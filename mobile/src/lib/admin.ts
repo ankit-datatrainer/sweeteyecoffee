@@ -39,6 +39,8 @@ export type AdminOptionGroup = {
 };
 
 export type ShopSettings = {
+  timezone: string;
+  timezones: Record<string, string>;
   tax_rate: number;
   curbside_enabled: boolean;
   local_delivery_fee: number;

@@ -4,14 +4,19 @@ import { Modal, Pressable, StyleSheet, View, useWindowDimensions } from 'react-n
 import Animated, { FadeIn, FadeInDown, FadeOut, ZoomIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PageScreen } from '@/components/layout';
-import { IconButton, PressableScale, T } from '@/components/ui';
+import { Button, IconButton, PressableScale, T } from '@/components/ui';
 import { useCatalog } from '@/store';
+import { usePage, openPageLink } from '@/lib/pages';
+import { ExtraSections, PageHero } from '@/components/page-content';
 import { colors, MAX_WIDTH, radius, space } from '@/theme';
 
 const NO_PHOTOS: string[] = [];
 
 export default function GalleryScreen() {
-  const gallery = useCatalog((s) => s.store?.gallery ?? NO_PHOTOS);
+  const c = usePage('gallery');
+  const fallback = useCatalog((s) => s.store?.gallery ?? NO_PHOTOS);
+  const photos = c.gallery('photos.items');
+  const gallery = c.page ? photos.map((p) => p.url ?? p.src) : fallback;
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [open, setOpen] = useState<number | null>(null);
@@ -30,8 +35,9 @@ export default function GalleryScreen() {
   });
 
   return (
-    <PageScreen title="Gallery">
-      <T variant="body" style={{ marginBottom: space.xl }}>Moments from the café — tap a photo to see it up close.</T>
+    <PageScreen title={c.text('hero.title', 'Gallery')}>
+      <PageHero page="gallery" />
+      <T variant="body" style={{ marginVertical: space.xl }}>Tap a photo to see it up close.</T>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         {stacks.map((stack, c) => (
           <View key={c} style={{ width: col, gap: 12 }}>
@@ -45,6 +51,11 @@ export default function GalleryScreen() {
           </View>
         ))}
       </View>
+      {c.visible('social') && <View style={{ gap: 10, marginTop: space.xxl }}>
+        <T variant="overline">{c.text('social.overline')}</T><T variant="title">{c.text('social.heading')}</T><T variant="body">{c.text('social.text')}</T>
+        {['instagram','facebook'].map((key) => !!c.text(`social.${key}`) && <Button key={key} title={key === 'instagram' ? 'Instagram' : 'Facebook'} variant="outline" onPress={() => openPageLink(c.text(`social.${key}`))} />)}
+      </View>}
+      <ExtraSections sections={c.sections} />
 
       <Modal visible={open !== null} transparent animationType="none" onRequestClose={() => setOpen(null)}>
         {open !== null && (
@@ -61,6 +72,7 @@ export default function GalleryScreen() {
               <T variant="smallStrong">{open + 1} / {gallery.length}</T>
               <IconButton name="chevron-right" onPress={() => setOpen((open + 1) % gallery.length)} />
             </View>
+            {!!photos[open]?.caption && <T variant="small" style={{ marginTop: 16 }}>{photos[open].caption}</T>}
           </Animated.View>
         )}
       </Modal>

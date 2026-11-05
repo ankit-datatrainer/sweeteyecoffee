@@ -6,6 +6,7 @@ import { imageUrl } from './catalog.js';
 import { formatAddress } from './pricing.js';
 import { notifyAdmins } from './notify.js';
 import { sendMail } from './mail.js';
+import { shipmentForOrder, shipmentSummary } from './ups-shipping.js';
 
 export const STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
 
@@ -48,6 +49,7 @@ export async function loadOrder(id, { includeUnpaid = false } = {}) {
   order.customer_email = customerEmail(order);
   order.items = items.map((i) => ({ ...i, modifiers: i.modifiers ? JSON.parse(i.modifiers) : [] }));
   order.payment = payment;
+  order.shipment = await shipmentForOrder(id);
   return order;
 }
 
@@ -119,6 +121,7 @@ export function serializeOrder(o, base) {
     customer_arrived_at: toIso(o.customer_arrived_at),
     delivery_address: o.delivery_address,
     shipping_service: o.shipping_service,
+    shipment: shipmentSummary(o.shipment, base),
     customer_name: o.customer_name,
     customer_email: o.customer_email,
     phone: o.delivery_phone,
@@ -195,6 +198,7 @@ export async function createOrder({ quote, user, guest, pickupMethod, vehicleDet
       ],
     );
     const orderId = orderResult.insertId;
+    if (isDelivery) await conn.query('UPDATE orders SET shipping_service_code = ? WHERE id = ?', [quote.delivery.code === 'standard' ? '03' : quote.delivery.code, orderId]);
 
     for (const line of quote.lines) {
       await conn.query(

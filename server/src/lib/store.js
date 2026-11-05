@@ -135,6 +135,16 @@ export async function taxRate() {
   return Number(await getSetting('tax_rate', 8)) / 100;
 }
 
+export const TIMEZONES = {
+  'America/New_York': 'Eastern Time (ET)', 'America/Chicago': 'Central Time (CT)',
+  'America/Denver': 'Mountain Time (MT)', 'America/Phoenix': 'Arizona Time (MST)',
+  'America/Los_Angeles': 'Pacific Time (PT)', 'America/Anchorage': 'Alaska Time (AKT)', 'Pacific/Honolulu': 'Hawaii Time (HST)',
+};
+export async function displayTimezone() {
+  const value = await getSetting('timezone', 'America/Chicago');
+  return Object.hasOwn(TIMEZONES, value) ? value : 'America/Chicago';
+}
+
 export async function curbsideEnabled() {
   return Number(await getSetting('curbside_enabled', '1')) === 1;
 }

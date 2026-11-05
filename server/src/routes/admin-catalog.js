@@ -8,7 +8,7 @@ import { first, query, transaction, nowUtc } from '../db.js';
 import { fail, money, optionalString, requireString } from '../lib/http.js';
 import { baseUrl, forgetImage, imageUrl } from '../lib/catalog.js';
 import { requireAdmin } from '../lib/auth.js';
-import { getSettings, normalizeHours } from '../lib/store.js';
+import { getSettings, normalizeHours, displayTimezone, TIMEZONES } from '../lib/store.js';
 import { couponLabel } from '../lib/pricing.js';
 
 /**
@@ -216,9 +216,9 @@ adminCatalogRoutes.delete('/admin/products/:id', async (req, res) => {
   const product = await first('SELECT id, name FROM products WHERE id = ?', [id]);
   if (!product) fail(404, 'Product not found.');
   // Deleting would cascade-delete it from customers' past orders, so ordered items are hidden instead.
-  if (await first('SELECT id FROM order_items WHERE product_id = ? LIMIT 1', [id])) {
+  if (await first('SELECT id FROM order_items WHERE product_id = ? LIMIT 1', [id]) || await first('SELECT id FROM coffee_subscriptions WHERE product_id = ? LIMIT 1', [id])) {
     await query('UPDATE products SET is_available = 0, updated_at = ? WHERE id = ?', [nowUtc(), id]);
-    return res.json({ hidden: true, message: `${product.name} has past orders, so it was hidden from the menu instead of deleted.` });
+    return res.json({ hidden: true, message: `${product.name} has orders or subscription agreements, so it was hidden from the menu instead of deleted.` });
   }
   await query('DELETE FROM products WHERE id = ?', [id]);
   res.json({ deleted: true, message: `${product.name} deleted.` });
@@ -530,13 +530,15 @@ adminCatalogRoutes.delete('/admin/coupons/:id', async (req, res) => {
 
 // ── Shop settings ───────────────────────────────────────────────────────────
 
-const SETTING_KEYS = ['tax_rate', 'curbside_enabled', 'local_delivery_fee', 'standard_shipping_rate', 'local_delivery_zips', 'store_hours'];
+const SETTING_KEYS = ['tax_rate', 'curbside_enabled', 'local_delivery_fee', 'standard_shipping_rate', 'local_delivery_zips', 'store_hours', 'timezone'];
 const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 async function currentSettings() {
   const s = await getSettings(SETTING_KEYS);
   return {
+    timezone: await displayTimezone(),
+    timezones: TIMEZONES,
     tax_rate: Number(s.tax_rate ?? 8),
     curbside_enabled: Number(s.curbside_enabled ?? '1') === 1,
     local_delivery_fee: Number(s.local_delivery_fee ?? config.shipping.localFee),
@@ -568,6 +570,10 @@ adminCatalogRoutes.get('/admin/settings', async (_req, res) => {
 adminCatalogRoutes.put('/admin/settings', async (req, res) => {
   const b = req.body ?? {};
   const changes = [];
+  if (b.timezone !== undefined) {
+    if (!Object.hasOwn(TIMEZONES, b.timezone)) fail(422, 'Choose a supported US time zone.');
+    changes.push(['timezone', b.timezone]);
+  }
   if (b.tax_rate !== undefined) changes.push(['tax_rate', number(b.tax_rate, 'Tax must be between 0 and 100%.', { max: 100 })]);
   if (b.curbside_enabled !== undefined) changes.push(['curbside_enabled', b.curbside_enabled ? '1' : '0']);
   if (b.local_delivery_fee !== undefined) changes.push(['local_delivery_fee', money(number(b.local_delivery_fee, 'Local delivery fee must be between $0 and $999.', { max: 999 }))]);

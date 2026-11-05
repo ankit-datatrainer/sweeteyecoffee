@@ -37,6 +37,13 @@ export const API_URL = resolveApiUrl();
 export function sized(url: string | null | undefined, width: number): string | null {
   if (!url) return null;
   if (!/^https?:\/\//.test(url) || !url.includes('/images/')) return url;
+  // CMS photos can be full URLs on the website or another image host. Only
+  // rebase our own API photos (including an old LAN address saved in the bag).
+  const source = new URL(url);
+  const current = new URL(API_URL);
+  const oldLocalApi = ['4000', '4600'].includes(source.port)
+    && /^(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(source.hostname);
+  if (source.origin !== current.origin && !oldLocalApi && source.hostname !== 'app.sweeteyecoffee.com') return url;
   const rebased = url.replace(/^https?:\/\/[^/]+/, API_URL);
   const withoutWidth = rebased.replace(/([?&])w=\d+(&|$)/, (_m, lead: string, tail: string) => (tail ? lead : '')).replace(/[?&]$/, '');
   return `${withoutWidth}${withoutWidth.includes('?') ? '&' : '?'}w=${width}`;

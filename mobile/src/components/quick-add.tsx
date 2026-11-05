@@ -5,6 +5,7 @@ import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withSp
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import type { Product } from '@/lib/types';
+import { exploreSubscription, subscriptionSelection } from '@/lib/subscriptions';
 import { useQuickAdd } from '@/store/quick-add';
 import { colors, fonts, radius, space } from '@/theme';
 import { OptionsForm, useCustomizer } from './customize';
@@ -63,7 +64,7 @@ function Sheet({ product, onClosed }: { product: Product; onClosed: () => void }
         <View style={styles.handle} />
 
         <View style={styles.header}>
-          <Photo eager uri={c.image} width={320} style={styles.photo} transition={250} />
+          <Photo eager uri={c.image} width={320} contentFit={product.is_beans ? 'contain' : 'cover'} style={styles.photo} transition={250} />
           <View style={{ flex: 1, gap: 2 }}>
             <T variant="overline">{product.category_name}</T>
             <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
@@ -87,7 +88,7 @@ function Sheet({ product, onClosed }: { product: Product; onClosed: () => void }
         <ScrollView style={{ flexShrink: 1 }} contentContainerStyle={{ paddingHorizontal: space.xl, paddingBottom: space.lg }} showsVerticalScrollIndicator={false}>
           {!!product.description && <T variant="small" style={{ marginTop: space.sm }}>{product.description}</T>}
           {hasOptions ? (
-            <OptionsForm product={product} c={c} animate={false} />
+            <OptionsForm product={product} c={c} animate={false} onSubscribe={() => dismiss(() => exploreSubscription(subscriptionSelection(product,c.size,c.quantity,Object.values(c.selected).flat())))} />
           ) : (
             <T variant="small" style={{ marginTop: space.md, color: colors.creamFaint }}>No options to choose — just pick how many.</T>
           )}

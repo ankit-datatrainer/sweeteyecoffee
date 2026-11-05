@@ -11,6 +11,7 @@ import { dateTime, money, STATUS_LABEL } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
 import type { Order, OrderStatus } from '@/lib/types';
 import { colors, fonts, space } from '@/theme';
+import { ShipmentTools } from '@/components/shipment';
 
 const ALL: OrderStatus[] = ['pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
 
@@ -91,6 +92,7 @@ export default function AdminOrderScreen() {
               {order.payment && <T variant="small">{order.payment.detail} · {order.payment.status}</T>}
             </Card>
           </Animated.View>
+          {order.type === 'delivery' && <ShipmentTools orderId={order.id} />}
           <Button title="Refresh" variant="outline" icon="refresh-cw" size="md" onPress={load} />
         </View>
       )}

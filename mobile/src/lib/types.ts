@@ -1,5 +1,26 @@
 export type ModifierOption = { id: number; name: string; price: number; large_price: number | null };
 
+export type GalleryPhoto = { src: string; url?: string | null; caption: string };
+export type PageSection = { id: number; type: 'text' | 'text_image' | 'image' | 'gallery' | 'cta'; data: Record<string, string | GalleryPhoto[]>; is_visible: boolean; sort_order: number };
+export type PageContent = {
+  title: string;
+  fields: Record<string, string | GalleryPhoto[] | null>;
+  hidden: string[];
+  sections: PageSection[];
+  schema?: Record<string, { label: string; hideable?: boolean; fields: Record<string, [string, string, string | GalleryPhoto[]]> }>;
+};
+export type SubscriptionQuote = {
+  product_id: number; name: string; size: string; quantity: number; plan: string; interval: string;
+  modifiers: { id: number; name: string; price: number }[];
+  unit_cents: number; subtotal_cents: number; discount_cents: number; discount_percent: number;
+  tax_cents: number; shipping_cents: number; total_cents: number; shipping_service: string; test_mode?: boolean;
+};
+export type CoffeeSubscription = {
+  id: string; status: string; plan: string; selection: SubscriptionQuote; total_cents: number;
+  cancel_at_period_end: boolean; period_end: string | null; created_at: string; can_resume_checkout: boolean;
+  customer_name?: string; customer_email?: string;
+};
+
 export type ModifierGroup = {
   id: number;
   slug: string;
@@ -113,6 +134,7 @@ export type Order = {
   customer_arrived_at: string | null;
   delivery_address: string | null;
   shipping_service: string | null;
+  shipment?: { status: string; tracking: string[] } | null;
   customer_name: string;
   customer_email: string | null;
   phone: string | null;

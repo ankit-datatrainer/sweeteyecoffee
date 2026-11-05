@@ -70,6 +70,7 @@ cd /var/www/sweeteye
 
 ```bash
 npm --prefix server install --omit=dev --no-audit --no-fund
+npm --prefix server run migrate
 npm --prefix mobile install --no-audit --no-fund
 npm --prefix mobile run build:web
 ```
@@ -197,6 +198,7 @@ On your computer, push the new code to GitHub. Then on the VPS:
 cd /var/www/sweeteye
 git checkout -- . && git pull
 npm --prefix server install --omit=dev --no-audit --no-fund
+npm --prefix server run migrate
 npm --prefix mobile install --no-audit --no-fund && npm --prefix mobile run build:web
 pm2 restart sweet-eye
 ```
@@ -220,3 +222,11 @@ pm2 restart sweet-eye
 ## Phone apps
 
 See [STORES.md](STORES.md). They already point at `https://app.sweeteyecoffee.com` (`mobile/eas.json`).
+
+## November 2026 pages, subscriptions and labels
+
+Run `npm --prefix server run migrate` after backing up the deployment database and before restarting the updated API. This is additive and repeatable. It creates the same page/subscription/UPS tables and order fields as the Laravel migrations. No Laravel runtime is needed by the app.
+
+Subscription setup and webhook events are described in [PARITY-REVIEW.md](PARITY-REVIEW.md). Keep the website's `APP_KEY` privately as `LARAVEL_APP_KEY` in `server/.env` so existing encrypted subscription addresses and shipment labels remain readable. Do not rotate or publish it. Subscription billing has dedicated Stripe secrets and is independent of the one-time `PAYMENTS_MODE` setting.
+
+Page edits share the database. This API serves the app web build and native clients from the same media directory. If a separate Laravel site remains deployed on another host, that host and the API also need shared/synchronized `public/images` storage for new photo uploads; sharing MySQL alone does not transfer image files. Set `IMAGES_DIR` to a common image directory on a shared host. `WEBSITE_URL` provides a fallback for missing local photos, so newly uploaded website photos can still be displayed by the app. Existing local filenames changed on a separate host still need synchronization.

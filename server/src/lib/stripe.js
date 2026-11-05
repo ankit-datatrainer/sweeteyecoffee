@@ -127,13 +127,13 @@ export const sessionPaysOrder = (session, order) =>
   Number(session.amount_total) === Math.round(Number(order.total_amount) * 100);
 
 /** Verify a Stripe webhook signature (Stripe-Signature: t=…,v1=…). Returns the event or null. */
-export function verifyWebhook(rawBody, header, tolerance = 300) {
-  if (!config.stripe.webhookSecret || !header) return null;
+export function verifyWebhook(rawBody, header, tolerance = 300, secret = config.stripe.webhookSecret) {
+  if (!secret || !header) return null;
   const parts = Object.fromEntries(header.split(',').map((p) => p.trim().split('=')));
   const signatures = header.split(',').filter((p) => p.trim().startsWith('v1=')).map((p) => p.trim().slice(3));
   const t = Number(parts.t);
   if (!t || Math.abs(Date.now() / 1000 - t) > tolerance) return null;
-  const expected = crypto.createHmac('sha256', config.stripe.webhookSecret).update(`${t}.${rawBody}`).digest('hex');
-  const ok = signatures.some((s) => s.length === expected.length && crypto.timingSafeEqual(Buffer.from(s), Buffer.from(expected)));
-  return ok ? JSON.parse(rawBody) : null;
+  const expected = crypto.createHmac('sha256', secret).update(`${t}.${rawBody}`).digest('hex');
+  const ok = signatures.some((s) => /^[a-f0-9]{64}$/i.test(s) && crypto.timingSafeEqual(Buffer.from(s, 'hex'), Buffer.from(expected, 'hex')));
+  try { return ok ? JSON.parse(rawBody) : null; } catch { return null; }
 }

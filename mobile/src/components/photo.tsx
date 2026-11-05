@@ -1,6 +1,6 @@
 import { Image, type ImageContentFit } from 'expo-image';
 import { useState, type ComponentProps } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { PixelRatio, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { sized } from '@/lib/api';
 import { colors } from '@/theme';
 import { Icon } from './ui';
@@ -20,7 +20,8 @@ export function Photo({ uri, width = 540, style, contentFit = 'cover', transitio
   /** Web only: load now instead of when scrolled near (photos on short, showcase screens). */
   eager?: boolean;
 }) {
-  const src = sized(uri, width);
+  const [measuredWidth, setMeasuredWidth] = useState(0);
+  const src = sized(uri, Math.max(width, Math.min(1600, Math.ceil(measuredWidth * PixelRatio.get()))));
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
   if (!src || failedSrc === src) {
@@ -34,6 +35,7 @@ export function Photo({ uri, width = 540, style, contentFit = 'cover', transitio
   return (
     <Image
       source={src}
+      onLayout={(e) => setMeasuredWidth(e.nativeEvent.layout.width)}
       recyclingKey={src}
       style={style as ComponentProps<typeof Image>['style']}
       contentFit={contentFit}

@@ -15,9 +15,9 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AmbientGlow, BrandMark, Steam, Wordmark } from '@/components/brand';
+import { AmbientGlow, Steam, Wordmark } from '@/components/brand';
 import { Contained, TAB_BAR_SPACE } from '@/components/layout';
-import { CountUp, Reveal, ScrollYContext } from '@/components/motion';
+import { Reveal, ScrollYContext } from '@/components/motion';
 import { openProduct, priceLabel } from '@/components/product';
 import { openQuickAdd } from '@/store/quick-add';
 import { Button, Icon, IconButton, PressableScale, SectionTitle, Skeleton, StatusDot, T } from '@/components/ui';
@@ -25,10 +25,14 @@ import { greeting } from '@/lib/format';
 import type { Product } from '@/lib/types';
 import { cartCount, useAuth, useCart, useCatalog, useUi } from '@/store';
 import { colors, fonts, radius, space } from '@/theme';
+import { usePage } from '@/lib/pages';
+import { ExtraSections } from '@/components/page-content';
+import { exploreSubscription } from '@/lib/subscriptions';
 
-const LEGAL = 'https://sweeteyecoffee.com';
+
 
 export default function HomeScreen() {
+  const c = usePage('home');
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { store, products, categories, status, load } = useCatalog();
@@ -43,7 +47,7 @@ export default function HomeScreen() {
 
   const heroHeight = Math.max(560, Math.min(height * 0.82, 820));
   const featured = useMemo(() => products.filter((p) => p.is_featured && p.orderable), [products]);
-  const heroImage = store?.gallery.find((g) => g.includes('IMG_1994')) ?? store?.gallery[0];
+  const heroImage = c.image('hero.background', store?.gallery[0]);
 
   const heroImageStyle = useAnimatedStyle(() => ({
     transform: [
@@ -83,17 +87,17 @@ export default function HomeScreen() {
                 {introDone && (
                   <>
                     <Animated.View entering={FadeInDown.duration(700)}>
-                      <T variant="overline" style={{ color: colors.goldLight }}>Globally sourced · Locally roasted</T>
+                      <T variant="overline" style={{ color: colors.goldLight }}>{c.text('hero.overline', 'Globally sourced · Locally roasted')}</T>
                     </Animated.View>
                     <Animated.Text entering={FadeInDown.delay(120).duration(800).springify().damping(18)} style={[styles.heroTitle, width > 700 && { fontSize: 64, lineHeight: 70 }]}>
-                      Exceptional Coffee,
+                      {c.text('hero.title', 'Exceptional Coffee,')}
                     </Animated.Text>
                     <Animated.Text entering={FadeInDown.delay(260).duration(800).springify().damping(18)} style={[styles.heroTitleGold, width > 700 && { fontSize: 64, lineHeight: 72 }]}>
-                      Crafted for You
+                      {c.text('hero.title_highlight', 'Crafted for You')}
                     </Animated.Text>
                     <Animated.View entering={FadeInDown.delay(400).duration(700)}>
                       <T variant="body" style={styles.heroSub}>
-                        Hand-selected beans from premium estates across 15 countries, roasted in small batches to unlock their full potential.
+                        {c.text('hero.subtitle', 'Hand-selected beans, roasted in small batches for maximum freshness.')}
                       </T>
                     </Animated.View>
                     <Animated.View entering={FadeInDown.delay(540).duration(700)} style={styles.heroCtas}>
@@ -123,26 +127,19 @@ export default function HomeScreen() {
             </Animated.View>
           </View>
 
-          {/* ── Stats ── */}
-          <Reveal>
+          {c.visible('stats') && <Reveal>
             <Contained style={styles.stats}>
-              {[
-                { to: 15, suffix: '+', label: 'Origins' },
-                { to: 10, suffix: 'K+', label: 'Customers' },
-                { to: 4.9, decimals: 1, label: 'Rating' },
-              ].map((s, i) => (
-                <View key={s.label} style={[styles.stat, i > 0 && styles.statDivider]}>
-                  <CountUp to={s.to} suffix={s.suffix} decimals={s.decimals} style={styles.statValue} start={introDone} />
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
+              {[1,2,3].map((i) => <View key={i} style={[styles.stat, i > 1 && styles.statDivider]}>
+                <Text style={styles.statValue}>{c.text(`stats.stat${i}_value`)}</Text>
+                <Text style={styles.statLabel}>{c.text(`stats.stat${i}_label`)}</Text>
+              </View>)}
             </Contained>
-          </Reveal>
+          </Reveal>}
 
           {/* ── Categories ── */}
-          <Reveal style={{ marginTop: space.xxxl }}>
+          {c.visible('categories') && <Reveal style={{ marginTop: space.xxxl }}>
             <Contained style={{ paddingHorizontal: space.xl }}>
-              <SectionTitle overline="Our selection" title="Explore the Menu" action="Full menu" onAction={() => router.navigate('/menu')} />
+              <SectionTitle overline={c.text("categories.overline")} title={c.text("categories.heading")} action="Full menu" onAction={() => router.navigate('/menu')} />
             </Contained>
             <Animated.ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRail}>
               {status !== 'ready' && !categories.length
@@ -163,25 +160,25 @@ export default function HomeScreen() {
                     );
                   })}
             </Animated.ScrollView>
-          </Reveal>
+          </Reveal>}
 
           {/* ── Featured carousel ── */}
-          <Reveal style={{ marginTop: space.xxxl }}>
+          {c.visible('featured') && <Reveal style={{ marginTop: space.xxxl }}>
             <Contained style={{ paddingHorizontal: space.xl }}>
-              <SectionTitle overline="Bestsellers" title="Featured Favorites" />
+              <SectionTitle overline={c.text("featured.overline")} title={c.text("featured.heading")} />
             </Contained>
             <FeaturedCarousel products={featured} />
-          </Reveal>
+          </Reveal>}
 
           {/* ── The difference ── */}
-          <Reveal style={{ marginTop: space.xxxl }}>
+          {c.visible('why') && <Reveal style={{ marginTop: space.xxxl }}>
             <Contained style={{ paddingHorizontal: space.xl }}>
-              <SectionTitle overline="Why Sweet Eye" title="The Difference" />
+              <SectionTitle overline={c.text("why.overline")} title={c.text("why.heading")} />
               <View style={[styles.diffGrid, width > 760 && { flexDirection: 'row' }]}>
                 {[
-                  { icon: 'globe' as const, title: 'Globally Sourced', body: 'Premium, specialty-grade beans from the ripest cherries across the world’s finest growing regions.' },
-                  { icon: 'sun' as const, title: 'Locally Roasted', body: 'Small-batch roasted fresh to order — never sitting on shelves for months like store-bought coffee.' },
-                  { icon: 'award' as const, title: 'Quality Inspected', body: 'Only Grade A specialty beans make the cut, each inspected for defects before roasting.' },
+                  { icon: 'globe' as const, title: c.text('why.item1_title'), body: c.text('why.item1_text') },
+                  { icon: 'sun' as const, title: c.text('why.item2_title'), body: c.text('why.item2_text') },
+                  { icon: 'award' as const, title: c.text('why.item3_title'), body: c.text('why.item3_text') },
                 ].map((d) => (
                   <View key={d.title} style={[styles.diffCard, width > 760 && { flex: 1 }]}>
                     <View style={styles.diffIcon}>
@@ -193,25 +190,23 @@ export default function HomeScreen() {
                 ))}
               </View>
             </Contained>
-          </Reveal>
+          </Reveal>}
 
-          {/* ── Roasted to order editorial ── */}
-          <Reveal style={{ marginTop: space.xxxl }}>
+          {c.visible('cta') && <Reveal style={{ marginTop: space.xxxl }}>
             <Contained style={{ paddingHorizontal: space.xl }}>
               <View style={styles.editorial}>
-                <Photo eager uri={store?.gallery.find((g) => g.includes('IMG_1917'))} width={1080} style={StyleSheet.absoluteFill} transition={400} />
+                <Photo eager uri={c.image('cta.background')} width={1600} style={StyleSheet.absoluteFill} />
                 <LinearGradient colors={['rgba(14,8,6,0.1)', 'rgba(14,8,6,0.95)']} style={StyleSheet.absoluteFill} />
                 <View style={styles.editorialText}>
-                  <T variant="overline">Our process</T>
-                  <Text style={styles.quote}>“There are no shortcuts around quality.”</Text>
-                  <T variant="body" style={{ color: colors.creamSoft }}>
-                    Every batch is roasted only after you order — maximum freshness, vibrant flavor, a coffee you’ll call yours.
-                  </T>
-                  <Button title="Shop coffee beans" variant="outline" size="md" icon="arrow-right" onPress={() => router.navigate({ pathname: '/menu', params: { category: 'coffee-beans' } })} style={{ alignSelf: 'flex-start', marginTop: space.lg }} />
+                  <T variant="overline">{c.text('cta.overline')}</T>
+                  <Text style={styles.quote}>{c.text('cta.heading')}</Text>
+                  <T variant="body" style={{ color: colors.creamSoft }}>{c.text('cta.text')}</T>
+                  <Button title="Explore coffee subscriptions" variant="outline" size="md" onPress={() => exploreSubscription()} />
+                  <Button title="Shop coffee beans" size="md" onPress={() => router.navigate({ pathname: '/menu', params: { category: 'coffee-beans' } })} />
                 </View>
               </View>
             </Contained>
-          </Reveal>
+          </Reveal>}
 
           {/* ── Gallery strip ── */}
           {!!store?.gallery.length && (
@@ -257,18 +252,19 @@ export default function HomeScreen() {
             </Reveal>
           )}
 
+          <Contained style={{ paddingHorizontal: space.xl }}><ExtraSections sections={c.sections} /></Contained>
+
           {/* ── Footer ── */}
           <Contained style={styles.footer}>
-            <BrandMark size={54} animate={false} color={colors.goldDeep} />
             <Wordmark width={150} color={colors.creamMuted} />
             <View style={styles.footerLinks}>
               {[
                 ['About', () => router.push('/about')],
                 ['Gallery', () => router.push('/gallery')],
                 ['Contact', () => router.push('/contact')],
-                ['Privacy', () => Linking.openURL(`${LEGAL}/privacy-policy`)],
-                ['Terms', () => Linking.openURL(`${LEGAL}/terms-and-conditions`)],
-                ['Refunds', () => Linking.openURL(`${LEGAL}/refund-policy`)],
+                ['Privacy', () => router.push('/legal/privacy')],
+                ['Terms', () => router.push('/legal/terms')],
+                ['Refunds', () => router.push('/legal/refund')],
               ].map(([label, go]) => (
                 <Text key={label as string} onPress={go as () => void} style={styles.footerLink}>{label as string}</Text>
               ))}
@@ -284,6 +280,7 @@ export default function HomeScreen() {
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(14,8,6,0.6)', borderBottomWidth: 1, borderColor: colors.line }]} />
           </Animated.View>
           <Contained style={styles.headerRow}>
+            <Wordmark width={96} color={colors.cream} />
             <View style={{ flex: 1 }}>
               <Text style={styles.greeting}>{greeting()}{user ? `, ${user.name.split(' ')[0]}` : ''}</Text>
               <Text style={styles.brand}>Sweet Eye</Text>
@@ -355,7 +352,7 @@ function FeaturedCard({ product, index, x, snap, width }: { product: Product; in
     <Animated.View style={[{ width }, card]}>
       <PressableScale onPress={() => openProduct(product)} scaleTo={0.97} style={[styles.featured, { height: width * 1.45 }]}>
         <Animated.View style={[StyleSheet.absoluteFill, image]}>
-          <Photo eager uri={product.image} width={800} style={StyleSheet.absoluteFill} transition={400} />
+          <Photo eager uri={product.image} width={800} contentFit={product.is_beans ? 'contain' : 'cover'} style={StyleSheet.absoluteFill} transition={400} />
         </Animated.View>
         <LinearGradient colors={['transparent', 'rgba(14,8,6,0.55)', 'rgba(14,8,6,0.97)']} locations={[0.35, 0.6, 1]} style={StyleSheet.absoluteFill} />
         <View style={styles.featuredBody}>

@@ -9,7 +9,7 @@ import { config } from '../config.js';
  * The original files are never changed.
  */
 export const WIDTHS = [160, 320, 540, 800, 1080, 1600];
-const CACHE_DIR = path.join(config.publicDir, '..', '.image-cache');
+const CACHE_DIR = path.join(config.publicDir, '..', '.image-cache', 'v2');
 const inFlight = new Map();
 
 /** Resolve a URL path under public/images, refusing anything that escapes it. */
@@ -44,7 +44,7 @@ export async function resized(full, width) {
         await sharp(full, { failOn: 'none' })
           .rotate() // respect phone-camera orientation
           .resize({ width, withoutEnlargement: true })
-          .webp({ quality: 80, effort: 4 })
+          .webp({ quality: 88, effort: 4, ...(path.basename(full).startsWith('logo_') ? { lossless: true } : {}) })
           .toFile(tmp);
         fs.renameSync(tmp, out);
         return out;

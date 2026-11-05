@@ -4,12 +4,12 @@ import { config } from '../config.js';
 /** Live UPS rates for coffee-bean shipping — a port of the website's UpsRatingService. Quotes only. */
 export const upsConfigured = () => Boolean(config.ups.clientId && config.ups.clientSecret && config.ups.accountNumber);
 
-const baseUrl = () => (config.ups.environment === 'sandbox' ? 'https://wwwcie.ups.com' : 'https://onlinetools.ups.com');
+export const upsBaseUrl = () => (config.ups.environment === 'sandbox' ? 'https://wwwcie.ups.com' : 'https://onlinetools.ups.com');
 let cachedToken = null;
 
-async function accessToken() {
+export async function accessToken() {
   if (cachedToken && cachedToken.expires > Date.now()) return cachedToken.value;
-  const res = await fetch(`${baseUrl()}/security/v1/oauth/token`, {
+  const res = await fetch(`${upsBaseUrl()}/security/v1/oauth/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -37,7 +37,7 @@ export async function upsRates(address, packageWeights) {
       PackagingType: { Code: '02', Description: 'Package' },
       PackageWeight: { UnitOfMeasurement: { Code: 'LBS', Description: 'Pounds' }, Weight: String(Math.max(1, Math.ceil(lbs))) },
     }));
-    const res = await fetch(`${baseUrl()}/api/rating/v2403/Shop`, {
+    const res = await fetch(`${upsBaseUrl()}/api/rating/v2403/Shop`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Accept: 'application/json', transId: crypto.randomUUID(), transactionSrc: 'sweeteyecoffee' },
       signal: AbortSignal.timeout(20000),

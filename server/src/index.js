@@ -1,11 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import { config } from './config.js';
+import { pageRoutes } from './routes/pages.js';
+import { shippingRoutes } from './routes/shipping.js';
+import { combinedStripeWebhook, subscriptionRoutes, subscriptionWebhook } from './routes/subscriptions.js';
 import { pool } from './db.js';
 import { HttpError } from './lib/http.js';
 import { attachUser, requireAdmin } from './lib/auth.js';
@@ -13,12 +17,12 @@ import { serveImage, warmImageCache } from './lib/images.js';
 import { LIMITS, apiLimit, stripeReturnLimit } from './lib/limits.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { authRoutes } from './routes/auth.js';
-import { checkoutRoutes, stripeWebhook } from './routes/checkout.js';
+import { checkoutRoutes } from './routes/checkout.js';
 import { orderRoutes } from './routes/orders.js';
 import { adminRoutes } from './routes/admin.js';
 import { adminCatalogRoutes } from './routes/admin-catalog.js';
 
-const app = express();
+export const app = express();
 // Only nginx on this machine may tell us the visitor's real IP / https.
 app.set('trust proxy', 'loopback');
 app.disable('x-powered-by');
@@ -33,7 +37,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", ...SQUARE],
         styleSrc: ["'self'", "'unsafe-inline'", ...SQUARE],
-        imgSrc: ["'self'", 'data:', 'blob:', ...SQUARE],
+        imgSrc: ["'self'", 'https:', 'data:', 'blob:', ...SQUARE],
         fontSrc: ["'self'", 'data:', ...SQUARE, 'https://d1g145x70srn7h.cloudfront.net'], // Square's card-form font
         connectSrc: ["'self'", ...SQUARE, 'https://pci-connect.squareup.com'],
         frameSrc: SQUARE,
@@ -64,7 +68,8 @@ app.use(
 app.use(compression());
 
 // Stripe signs the raw body, so the webhook reads it before JSON parsing.
-app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), stripeWebhook);
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json', limit: '1mb' }), combinedStripeWebhook);
+app.post('/api/subscriptions/webhook', express.raw({ type: 'application/json', limit: '1mb' }), subscriptionWebhook);
 // Staff routes accept photo uploads (base64): check the staff login before reading a big body.
 app.use('/api/admin', attachUser, requireAdmin, express.json({ limit: '8mb' }));
 app.use(express.json({ limit: '200kb' }));
@@ -82,7 +87,7 @@ app.get('/api/health', async (_req, res) => {
   res.json({ ok: true, payments_mode: config.paymentsMode });
 });
 
-app.use('/api', attachUser, catalogRoutes, authRoutes, checkoutRoutes, orderRoutes, adminRoutes, adminCatalogRoutes);
+app.use('/api', attachUser, catalogRoutes, authRoutes, checkoutRoutes, orderRoutes, adminRoutes, adminCatalogRoutes, pageRoutes, subscriptionRoutes, shippingRoutes);
 
 app.use('/api', (_req, res) => res.status(404).json({ message: 'Not found.' }));
 
@@ -131,7 +136,7 @@ const lanAddresses = () =>
 
 // In production only nginx (same machine) talks to Node; locally phones on the Wi-Fi need it.
 const host = config.isProduction ? '127.0.0.1' : '0.0.0.0';
-app.listen(config.port, host, async () => {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) app.listen(config.port, host, async () => {
   try {
     await pool.query('SELECT 1');
     console.log(`☕ Sweet Eye API connected to MySQL ${config.db.host}:${config.db.port}/${config.db.database}`);

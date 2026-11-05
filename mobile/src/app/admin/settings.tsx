@@ -4,7 +4,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { FormSection, SwitchRow, useStaffOnly } from '@/components/admin';
 import { PageScreen } from '@/components/layout';
 import { toast } from '@/components/toast';
-import { Button, Card, Field, Notice, Skeleton, T } from '@/components/ui';
+import { Button, Card, Chip, Field, Notice, Skeleton, T } from '@/components/ui';
 import type { ShopSettings } from '@/lib/admin';
 import { errorMessage, get, put } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
@@ -103,6 +103,9 @@ export default function AdminSettingsScreen() {
       ) : (
         <Animated.View entering={FadeInDown}>
           <T variant="body">These apply to the app and the website alike — they live in the shop’s database.</T>
+          <FormSection title="Order time zone" hint="Used for order dates and bills. Opening hours follow the cafe's local time.">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{Object.entries(settings.timezones).map(([zone,label]) => <Chip key={zone} label={label} selected={settings.timezone === zone} onPress={() => save('timezone', { timezone: zone }, 'Order time zone saved.')} />)}</View>
+          </FormSection>
 
           <FormSection title="Opening hours" hint="Shown on the home and contact pages, and used for the “Open now / Closed” badge. Type times like 7:30 AM or 10:30 PM.">
             <Card style={{ gap: 4 }}>

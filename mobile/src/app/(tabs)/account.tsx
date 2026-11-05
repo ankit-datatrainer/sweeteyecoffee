@@ -32,7 +32,8 @@ export default function AccountScreen() {
     { icon: 'image', label: 'Gallery', onPress: () => router.push('/gallery') },
     { icon: 'mail', label: 'Contact us', onPress: () => router.push('/contact') },
     ...(store ? [{ icon: 'phone' as const, label: `Call ${store.phone_display}`, onPress: () => Linking.openURL(`tel:${store.phone}`) }] : []),
-    { icon: 'file-text', label: 'Privacy, terms & refunds', onPress: () => Linking.openURL('https://sweeteyecoffee.com/privacy-policy') },
+    { icon: 'file-text', label: 'Privacy, terms & refunds', onPress: () => router.push('/legal/privacy') },
+    { icon: 'repeat', label: 'Coffee subscriptions', onPress: () => router.push('/subscriptions') },
   ];
 
   return (

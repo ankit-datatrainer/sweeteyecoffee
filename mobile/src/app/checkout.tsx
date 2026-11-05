@@ -1,3 +1,4 @@
+import { subscribeCartLine } from '@/lib/subscriptions';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -304,6 +305,11 @@ export default function CheckoutScreen() {
       <Field label={user && method !== 'delivery' ? 'Phone (optional)' : 'Phone'} icon="phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" />
       <Field label="Notes for the barista (optional)" icon="edit-3" value={notes} onChangeText={setNotes} multiline maxLength={1000} containerStyle={{ marginTop: 10 }} />
 
+      {lines.some((l) => l.is_beans) && <Card style={{ gap: 10, marginTop: 20 }}>
+        <T variant="heading">Make your coffee a regular delivery</T>
+        <T variant="small">Save up to 15% on beans. Each subscription covers one selection. Your one-time bag stays saved.</T>
+        {lines.filter((l) => l.is_beans).map((l) => <Button key={l.key} title={`Subscribe to ${l.name} (${l.size_name})`} variant="outline" size="md" onPress={() => subscribeCartLine(l)} />)}
+      </Card>}
       {/* 3 · Payment */}
       <Step n={3} title="Payment" />
       {total <= 0 && quote ? (

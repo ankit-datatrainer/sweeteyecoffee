@@ -18,18 +18,19 @@ const mtimes = new Map();
 export function imageUrl(base, relPath, w = 1080) {
   if (!relPath) return null;
   const clean = String(relPath).replace(/^images\//, '');
-  let mtime = mtimes.get(clean);
+  const cached = mtimes.get(clean);
+  let mtime = cached && cached.expires > Date.now() ? cached.mtime : undefined;
   if (mtime === undefined) {
     try {
-      mtime = Math.floor(fs.statSync(path.join(config.imagesDir, clean)).mtimeMs / 1000);
+      mtime = Math.floor(fs.statSync(path.join(config.imagesDir, clean)).mtimeMs);
     } catch {
       mtime = null;
     }
     // Only remember files that exist, so a photo added later shows up without a restart.
-    if (mtime !== null) mtimes.set(clean, mtime);
+    if (mtime !== null) mtimes.set(clean, { mtime, expires: Date.now() + 30000 });
   }
-  if (mtime === null) return null;
-  const url = `${base}/images/${clean.split('/').map(encodeURIComponent).join('/')}?v=${mtime}`;
+  if (mtime === null) return config.websiteUrl ? `${config.websiteUrl}/images/${clean.split('/').map(encodeURIComponent).join('/')}` : null;
+  const url = `${base}/images/${clean.split('/').map(encodeURIComponent).join('/')}?v=${mtime}-2`;
   return w && !clean.endsWith('.svg') ? `${url}&w=${w}` : url;
 }
 
@@ -53,7 +54,7 @@ export async function visibleCategories() {
 
 async function loadProducts(where, params) {
   const products = await query(
-    `SELECT p.*, c.slug AS category_slug, c.name AS category_name, c.season_start, c.season_end
+    `SELECT p.*, c.slug AS category_slug, c.name AS category_name, c.is_active AS category_active, c.season_start, c.season_end
        FROM products p JOIN categories c ON c.id = p.category_id
       WHERE ${where}
       ORDER BY c.sort_order, p.sort_order, p.id`,
@@ -100,7 +101,7 @@ export async function productById(id) {
 // ── Shaping for the app ─────────────────────────────────────────────────────
 
 export function isOrderable(product) {
-  return Boolean(product.is_available) && !product.is_sold_out && isInSeason(product);
+  return Boolean(product.is_available) && product.category_active !== 0 && !product.is_sold_out && isInSeason(product);
 }
 
 export function serializeCategory(c, base) {
@@ -174,7 +175,7 @@ export async function priceLine(input, preloaded = null) {
 
   const product = preloaded ?? (await productById(productId));
   if (!product) fail(422, 'That item is no longer on the menu.');
-  if (!product.is_available || !isInSeason(product)) fail(422, `${product.name} is not on the menu right now.`);
+  if (!product.is_available || product.category_active === 0 || !isInSeason(product)) fail(422, `${product.name} is not on the menu right now.`);
   if (product.is_sold_out) fail(422, `Sorry, ${product.name} is currently unavailable.`);
 
   const sizeName = input.size_name ? String(input.size_name) : null;

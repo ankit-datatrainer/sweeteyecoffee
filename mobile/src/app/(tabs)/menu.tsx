@@ -11,6 +11,9 @@ import { Button, Icon, PressableScale, Skeleton, T } from '@/components/ui';
 import { haptic } from '@/lib/haptics';
 import type { Category, Product } from '@/lib/types';
 import { useCatalog } from '@/store';
+import { usePage } from '@/lib/pages';
+import { ExtraSections } from '@/components/page-content';
+import { Photo } from '@/components/photo';
 import { colors, fonts, MAX_WIDTH, radius, space, springs } from '@/theme';
 
 type Row =
@@ -18,6 +21,7 @@ type Row =
   | { type: 'items'; key: string; items: Product[] };
 
 export default function MenuScreen() {
+  const c = usePage('menu');
   const params = useLocalSearchParams<{ category?: string; focus?: string }>();
   const { categories, products, status, error, load } = useCatalog();
   const insets = useSafeAreaInsets();
@@ -91,13 +95,14 @@ export default function MenuScreen() {
         contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + insets.bottom }}
         ListHeaderComponent={
           <View style={{ paddingTop: insets.top }}>
+            <Photo uri={c.image("hero.background")} width={1600} style={StyleSheet.absoluteFill} />
             <BlurView intensity={50} tint="dark" style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(14,8,6,0.78)', borderBottomWidth: 1, borderColor: colors.line }]} />
             <View style={styles.headerInner}>
               <View style={styles.titleRow}>
                 <View style={{ flex: 1 }}>
-                  <T variant="overline">Sweet Eye</T>
-                  <T variant="display">Our Menu</T>
+                  <T variant="overline">{c.text("hero.overline", "Sweet Eye")}</T>
+                  <T variant="display">{c.text("hero.title", "Our Menu")}</T>
                 </View>
                 <Steam width={44} height={40} color={colors.goldGlow} />
               </View>
@@ -160,11 +165,11 @@ export default function MenuScreen() {
           )
         }
         ListFooterComponent={
-          rows.length && (query || activeCategory) ? (
+          <View style={styles.contained}><ExtraSections sections={c.sections} />{rows.length && (query || activeCategory) ? (
             <T variant="small" style={[styles.contained, { textAlign: 'center', marginTop: 10 }]}>
               {resultCount} {resultCount === 1 ? 'item' : 'items'}{activeCategory ? ` in ${activeCategory.name}` : ''}
             </T>
-          ) : undefined
+          ) : null}</View>
         }
       />
     </View>

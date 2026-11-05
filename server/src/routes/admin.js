@@ -6,6 +6,7 @@ import { requireAdmin } from '../lib/auth.js';
 import { assertStatus, loadOrder, loadOrdersFor, serializeOrder, pickupMethodLabel } from '../lib/orders.js';
 import { sendMail } from '../lib/mail.js';
 import { config } from '../config.js';
+import { displayTimezone } from '../lib/store.js';
 
 /** Staff tools inside the app: live order queue, status updates, sold-out switches. */
 export const adminRoutes = Router();
@@ -13,7 +14,7 @@ adminRoutes.use('/admin', requireAdmin);
 
 adminRoutes.get('/admin/summary', async (_req, res) => {
   // "Today" in the shop's timezone, as a UTC range.
-  const tz = config.store.timezone;
+  const tz = await displayTimezone();
   const now = new Date();
   const local = new Date(now.toLocaleString('en-US', { timeZone: tz }));
   const offsetMs = now.getTime() - local.getTime();

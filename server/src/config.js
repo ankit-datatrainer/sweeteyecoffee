@@ -24,7 +24,8 @@ export const config = {
   webDir: path.resolve(root, env('WEB_DIR', '../mobile/dist')),
   appName: env('APP_NAME', 'Sweet Eye Coffee Roasters'),
   publicDir: path.join(root, 'public'),
-  imagesDir: path.join(root, 'public', 'images'),
+  imagesDir: path.resolve(root, env('IMAGES_DIR', 'public/images')),
+  websiteUrl: env('WEBSITE_URL', 'https://sweeteyecoffee.com').replace(/\/+$/, ''),
 
   db: {
     host: env('DB_HOST', '127.0.0.1'),
@@ -54,6 +55,14 @@ export const config = {
     secret: env('STRIPE_SECRET'),
     publishableKey: env('STRIPE_KEY'),
     webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
+  },
+  subscriptions: {
+    enabled: env('COFFEE_SUBSCRIPTIONS_ENABLED', 'true') === 'true',
+    allowLive: env('COFFEE_SUBSCRIPTIONS_ALLOW_LIVE', 'false') === 'true',
+    secret: env('COFFEE_SUBSCRIPTIONS_STRIPE_SECRET'),
+    webhookSecret: env('COFFEE_SUBSCRIPTIONS_WEBHOOK_SECRET'),
+    // The Laravel APP_KEY keeps shared subscription addresses encrypted compatibly.
+    encryptionKey: env('LARAVEL_APP_KEY'),
   },
 
   // UPS live rates for faster coffee-bean shipping (read-only quotes).

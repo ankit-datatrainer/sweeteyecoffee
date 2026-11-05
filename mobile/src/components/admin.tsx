@@ -34,12 +34,12 @@ export function confirmAction(title: string, message: string, action: string, on
 }
 
 /** Pick a photo from the library as a data URI ready for upload, or null if cancelled. */
-export async function pickPhoto(): Promise<{ uri: string; data: string } | null> {
+export async function pickPhoto(crop = true): Promise<{ uri: string; data: string } | null> {
   if (Platform.OS !== 'web') {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) throw new Error('Allow photo access in Settings to change product photos.');
   }
-  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 5], quality: 0.82, base64: true });
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: crop, ...(crop ? { aspect: [4, 5] as [number, number] } : {}), quality: 0.95, base64: true });
   const asset = result.canceled ? null : result.assets[0];
   if (!asset?.base64 && !asset?.uri.startsWith('data:')) return null;
   const data = asset.uri.startsWith('data:') ? asset.uri : `data:${asset.mimeType ?? 'image/jpeg'};base64,${asset.base64}`;

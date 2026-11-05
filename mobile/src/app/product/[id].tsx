@@ -101,7 +101,7 @@ function Customizer({ product }: { product: Product }) {
   const hero = (
     <View style={[styles.hero, { height: heroHeight }, wide && styles.heroWide]}>
       <Animated.View style={[StyleSheet.absoluteFill, !wide && heroStyle]}>
-        <Photo eager uri={image} width={1080} style={StyleSheet.absoluteFill} transition={450} />
+        <Photo eager uri={image} width={1080} contentFit={product.is_beans ? 'contain' : 'cover'} style={StyleSheet.absoluteFill} transition={450} />
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: iced ? '#BFD9FF' : colors.goldLight }, shineStyle]} />
       </Animated.View>
       <LinearGradient colors={['rgba(14,8,6,0.55)', 'transparent', 'transparent', wide ? 'transparent' : colors.bg]} locations={[0, 0.25, 0.6, 1]} style={StyleSheet.absoluteFill} />

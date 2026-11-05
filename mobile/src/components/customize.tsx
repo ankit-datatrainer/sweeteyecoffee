@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { exploreSubscription, subscriptionSelection } from '@/lib/subscriptions';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { errorMessage, post } from '@/lib/api';
@@ -7,7 +8,7 @@ import type { CartLine, ModifierGroup, ModifierOption, Product } from '@/lib/typ
 import { useCart } from '@/store';
 import { colors, fonts, radius, space, springs } from '@/theme';
 import { toast } from './toast';
-import { Chip, Icon, PressableScale, T } from './ui';
+import { Button, Chip, Icon, PressableScale, T } from './ui';
 
 const isLarge = (size: string | null) => (size ?? '').trim().toLowerCase() === 'large';
 export const optionPrice = (o: ModifierOption, size: string | null) => (o.large_price !== null && isLarge(size) ? o.large_price : o.price);
@@ -17,14 +18,17 @@ export const optionPrice = (o: ModifierOption, size: string | null) => (o.large_
  * add-ons, quantity — and add it to the bag. Shared by the product page and
  * the quick-add sheet so both follow exactly the same rules.
  */
-export function useCustomizer(product: Product) {
+export function useCustomizer(product: Product, initial?: { size?: string | null; quantity?: number; modifiers?: number[] }) {
   const addLine = useCart((s) => s.add);
-  const [size, setSize] = useState<string | null>(product.sizes[0]?.name ?? null);
+  const [size, setSize] = useState<string | null>(product.sizes.some((s) => s.name === initial?.size) ? initial!.size! : product.sizes[0]?.name ?? null);
   const [selected, setSelected] = useState<Record<number, number[]>>(() =>
     // Required single-choice groups start on their first option (e.g. Hot, Light roast).
-    Object.fromEntries(product.groups.filter((g) => g.required && g.selection === 'single').map((g) => [g.id, [g.options[0].id]])),
+    Object.fromEntries(product.groups.map((g) => {
+      const chosen = g.options.filter((o) => initial?.modifiers?.includes(o.id)).map((o) => o.id);
+      return [g.id, chosen.length ? chosen : g.required && g.selection === 'single' ? [g.options[0].id] : []];
+    })),
   );
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(initial?.quantity ?? 1);
   const [adding, setAdding] = useState(false);
 
   const temperature = product.groups.find((g) => g.slug === 'temperature');
@@ -85,7 +89,7 @@ export function useCustomizer(product: Product) {
 export type Customizer = ReturnType<typeof useCustomizer>;
 
 /** Hot/Iced switch, sizes and every option group for a product. */
-export function OptionsForm({ product, c, animate = true }: { product: Product; c: Customizer; animate?: boolean }) {
+export function OptionsForm({ product, c, animate = true, showSubscription = true, onSubscribe }: { product: Product; c: Customizer; animate?: boolean; showSubscription?: boolean; onSubscribe?: () => void }) {
   const enter = (delay: number) => (animate ? FadeInDown.delay(delay).duration(450) : undefined);
   const { temperature, selected, size, toggle } = c;
 
@@ -143,6 +147,7 @@ export function OptionsForm({ product, c, animate = true }: { product: Product; 
           </T>
         </Animated.View>
       )}
+      {product.is_beans && product.orderable && showSubscription && <Button title="Explore subscription · save up to 15%" variant="outline" size="md" onPress={onSubscribe ?? (() => exploreSubscription(subscriptionSelection(product,c.size,c.quantity,Object.values(c.selected).flat())))} style={{ marginTop: 16 }} />}
     </View>
   );
 }

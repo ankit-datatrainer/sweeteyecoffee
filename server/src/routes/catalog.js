@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { fail } from '../lib/http.js';
 import { baseUrl, priceLine, productById, serializeCategory, serializeProduct, visibleProducts, imageUrl } from '../lib/catalog.js';
-import { storeStatus, storeHours, hoursDisplay, taxRate, curbsideEnabled } from '../lib/store.js';
+import { storeStatus, storeHours, hoursDisplay, taxRate, curbsideEnabled, displayTimezone } from '../lib/store.js';
 import { shippingSettings } from '../lib/pricing.js';
 import { squareConfigured } from '../lib/square.js';
 import { enabledStripeMethods } from '../lib/stripe.js';
@@ -22,7 +22,7 @@ catalogRoutes.get('/store', async (req, res) => {
     phone: store.phone,
     phone_display: store.phoneDisplay,
     email: store.email,
-    timezone: store.timezone,
+    timezone: await displayTimezone(),
     hours: hoursDisplay(hours),
     status: storeStatus(new Date(), hours),
     directions_url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`Sweet Eye Coffee, ${store.address}`)}`,

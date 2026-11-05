@@ -170,7 +170,7 @@ checkoutRoutes.post('/orders/:id/cancel-unpaid', async (req, res) => {
  * Only send customers back into the installed app or our own website. Locally,
  * Expo Go (exp://) and LAN / localhost web builds are allowed too.
  */
-function safeReturnUrl(value) {
+export function safeReturnUrl(value) {
   const url = String(value ?? '');
   if (url.length > 500) return null;
   if (/^sweeteye:\/\//i.test(url)) return url;

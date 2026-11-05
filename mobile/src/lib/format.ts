@@ -1,18 +1,23 @@
 import type { OrderStatus, Ticket } from './types';
 
-export const money = (value: number | string | null | undefined) => `$${Number(value ?? 0).toFixed(2)}`;
+export const money = (value: number | string | null | undefined) => {
+  const amount = Number(value ?? 0);
+  return `${amount < 0 ? '-' : ''}$${Math.abs(amount).toFixed(2)}`;
+};
+let displayTimezone = 'America/Chicago';
+export const setDisplayTimezone = (timezone: string) => { displayTimezone = timezone; };
 
 export function shortDate(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago' });
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: displayTimezone });
 }
 
 export function dateTime(iso: string | null) {
   if (!iso) return '';
   const d = new Date(iso);
   return d.toLocaleString('en-US', {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago',
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: displayTimezone,
   });
 }
 

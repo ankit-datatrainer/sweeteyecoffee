@@ -7,12 +7,19 @@ mobile/   Expo SDK 58 app (React Native + web) — screens in mobile/src/app
 server/   Node.js API on the sweet_eye_coffee database — serves the menu photos too
 ```
 
+## Website feature update — 5 November 2026
+
+The Expo app and its web build now include recurring coffee subscriptions, shared editable pages (including policies and galleries), the website’s order time-zone setting, and UPS label creation/tracking. Bean selection carries from menu/product/checkout into subscriptions without clearing the one-time bag. Photos use higher-resolution copies and bean labels remain uncropped.
+
+See [deploy/PARITY-REVIEW.md](deploy/PARITY-REVIEW.md) for the feature review, verification, billing setup and reference backup.
+
 ## Run it
 
 1. Start **MySQL** in the XAMPP control panel (the database runs on port 3307).
 2. In this folder:
 
    ```bash
+   npm run db:migrate
    npm run dev
    ```
 
@@ -82,12 +89,13 @@ Menu and café photos live in `server/public/images` (same files and paths the w
 
 ```bash
 npm run check
+npm test
 ```
 
-Runs the TypeScript and ESLint checks on the app.
+Runs the app TypeScript/ESLint checks and the API regression suite. API integration tests create and remove a separate temporary MySQL database; they copy catalog data only and mock all billing/shipping provider calls. Local MySQL must be running and the local database user needs permission to create/drop this test database.
 
 ## Database
 
 `server/database/sweet_eye_coffee.sql` is a full dump of the database taken on 28 Oct 2026 (includes the order-list indexes added for speed). Import it in phpMyAdmin to set up a new machine, then copy `server/.env.example` to `server/.env` and fill in the passwords and keys.
 
-The Laravel website code was backed up to `Sweet Eye Coffee - Laravel backup 2026-10-27.zip` in the parent folder before it was removed from here (without `vendor/` and `node_modules/`; `composer install` and `npm install` restore those).
+The newly supplied Laravel reference was archived to `Sweet Eye Coffee - Laravel reference 2026-11-05.zip` in the parent folder before moving the imported `Sweet Eye Coffee/` directory out of the project to the Windows Recycle Bin. The verified archive retains source, assets, configuration and database files; dependencies and runtime caches can be restored with Composer/npm. Backup details are recorded in `deploy/laravel-reference-backup.json`. The working application is `mobile/` + `server/`; the web build is `mobile/dist/`.

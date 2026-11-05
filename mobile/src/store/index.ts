@@ -4,12 +4,15 @@ import { Platform } from 'react-native';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { get, setAuthToken } from '@/lib/api';
-import type { CartLine, Category, Product, StoreInfo, User } from '@/lib/types';
+import { setDisplayTimezone } from '@/lib/format';
+import type { CartLine, Category, PageContent, Product, StoreInfo, User } from '@/lib/types';
 
 // ── Catalog (menu + shop details) ───────────────────────────────────────────
 
 type CatalogState = {
   store: StoreInfo | null;
+  pages: Record<string, PageContent>;
+  loadedAt: number;
   categories: Category[];
   products: Product[];
   status: 'idle' | 'loading' | 'ready' | 'error';
@@ -20,6 +23,8 @@ type CatalogState = {
 
 export const useCatalog = create<CatalogState>((set, getState) => ({
   store: null,
+  pages: {},
+  loadedAt: 0,
   categories: [],
   products: [],
   status: 'idle',
@@ -28,11 +33,13 @@ export const useCatalog = create<CatalogState>((set, getState) => ({
     if (!force && getState().status === 'loading') return;
     set({ status: getState().products.length ? getState().status : 'loading', error: null });
     try {
-      const [store, catalog] = await Promise.all([
+      const [store, catalog, content] = await Promise.all([
         get<StoreInfo>('/store'),
         get<{ categories: Category[]; products: Product[] }>('/catalog'),
+        get<{ pages: Record<string, PageContent> }>('/pages'),
       ]);
-      set({ store, categories: catalog.categories, products: catalog.products, status: 'ready' });
+      setDisplayTimezone(store.timezone);
+      set({ store, categories: catalog.categories, products: catalog.products, pages: content.pages, loadedAt: Date.now(), status: 'ready' });
     } catch (error) {
       set({ status: 'error', error: (error as Error).message });
     }

@@ -147,6 +147,7 @@ authRoutes.put('/auth/password', requireUser, async (req, res) => {
 authRoutes.delete('/auth/me', requireUser, async (req, res) => {
   if (['admin', 'super_admin'].includes(req.user.role)) fail(403, 'Staff accounts cannot be deleted from the app.');
   if (!(await checkPassword(String(req.body?.password ?? ''), req.user.password))) fail(422, 'Your password is incorrect.');
+  if (await first('SELECT id FROM coffee_subscriptions WHERE user_id = ? LIMIT 1', [req.user.id])) fail(422, 'Please contact the shop to close your account and reconcile your subscription billing.');
   await query('DELETE FROM users WHERE id = ?', [req.user.id]);
   res.json({ message: 'Your account has been deleted.' });
 });
