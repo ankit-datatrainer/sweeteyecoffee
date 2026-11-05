@@ -136,7 +136,7 @@ const lanAddresses = () =>
 
 // In production only nginx (same machine) talks to Node; locally phones on the Wi-Fi need it.
 const host = config.isProduction ? '127.0.0.1' : '0.0.0.0';
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) app.listen(config.port, host, async () => {
+if (process.env.NODE_APP_INSTANCE !== undefined || (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))) app.listen(config.port, host, async () => {
   try {
     await pool.query('SELECT 1');
     console.log(`☕ Sweet Eye API connected to MySQL ${config.db.host}:${config.db.port}/${config.db.database}`);
