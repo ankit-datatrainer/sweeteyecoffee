@@ -100,6 +100,17 @@
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "8ae12563-3b11-4d9a-a8b9-60cbdd78b093"
+      }
+    },
+    "owner": "code-with-ankit"
   }
 }
