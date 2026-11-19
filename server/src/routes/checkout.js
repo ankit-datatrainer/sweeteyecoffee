@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { config } from '../config.js';
 import { fail, requireString, optionalString, isEmail } from '../lib/http.js';
 import { baseUrl, imageUrl } from '../lib/catalog.js';
-import { quote, serializeQuote, findCoupon, couponProblem, couponDiscount, couponLabel, priceCart } from '../lib/pricing.js';
+import { quote, serializeQuote, couponLabel } from '../lib/pricing.js';
 import { taxRate } from '../lib/store.js';
 import { signOrderToken, verifyOrderToken } from '../lib/auth.js';
 import { createOrder, completeOrder, discardUnpaid, loadOrder, serializeOrder } from '../lib/orders.js';
@@ -30,20 +30,14 @@ checkoutRoutes.post('/checkout/quote', async (req, res) => {
 
 checkoutRoutes.post('/coupon/apply', async (req, res) => {
   const code = requireString(req.body?.coupon_code, 'Please enter a coupon code.', 50);
-  const coupon = await findCoupon(code);
-  if (!coupon) fail(422, 'Invalid coupon code.');
-  const lines = await priceCart(req.body?.items);
-  const subtotal = lines.reduce((sum, l) => sum + l.total, 0);
-  const problem = couponProblem(coupon, subtotal);
-  if (problem) fail(422, problem);
-  const discount = couponDiscount(coupon, subtotal);
-  const tax = Math.round((subtotal - discount) * (await taxRate()) * 100) / 100;
+  const q = await quote({ items: req.body?.items, coupon_code: code });
+  if (!q.coupon) fail(422, q.couponMessage);
   res.json({
     message: 'Coupon applied!',
-    coupon: { code: coupon.code, label: couponLabel(coupon) },
-    discount,
-    tax,
-    total: Math.round((subtotal - discount + tax) * 100) / 100,
+    coupon: { code: q.coupon.code, label: couponLabel(q.coupon) },
+    discount: q.discount,
+    tax: q.tax,
+    total: q.total,
   });
 });
 

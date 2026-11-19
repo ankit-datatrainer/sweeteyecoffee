@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { config } from '../config.js';
 import { first, query, transaction, nowUtc, toIso } from '../db.js';
 import { fail } from './http.js';
-import { priceLine, visibleProducts, serializeProduct } from './catalog.js';
+import { beanSizeKey, priceLine, visibleProducts, serializeProduct } from './catalog.js';
 import { shippingSettings, normalizeAddress, formatAddress } from './pricing.js';
 import { getSetting, taxRate } from './store.js';
 import { completeOrder, generateOrderNumber, loadOrder } from './orders.js';
@@ -160,11 +160,12 @@ export async function startSubscription(user, raw, returnUrl) {
     const identity = (q) =>
       JSON.stringify([
         q.product_id,
-        q.size,
+        beanSizeKey(q.size),
         q.quantity,
         q.plan,
         Boolean(q.test_mode),
-        (q.modifiers ?? []).map((m) => m.id).sort((a, b) => a - b),
+        // Older plans without a grind already represent whole beans.
+        (q.modifiers ?? []).filter((m) => m.name?.trim().toLowerCase() !== 'whole bean').map((m) => m.id).sort((a, b) => a - b),
       ]);
     for (const s of existing) {
       const recipient = decryptRecipient(s.recipient, config.subscriptions.encryptionKey);

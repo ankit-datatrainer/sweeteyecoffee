@@ -76,7 +76,7 @@ orderRoutes.get('/account/summary', requireUser, async (req, res) => {
   res.json({ total_orders: stats.total_orders, total_spent: Number(stats.total_spent), open_tickets: tickets.open });
 });
 
-const serializeTicket = (t) => ({
+export const serializeTicket = (t) => ({
   id: t.id,
   ticket_number: t.ticket_number,
   subject: t.subject,

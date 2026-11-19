@@ -21,13 +21,14 @@ export const optionPrice = (o: ModifierOption, size: string | null) => (o.large_
 export function useCustomizer(product: Product, initial?: { size?: string | null; quantity?: number; modifiers?: number[] }) {
   const addLine = useCart((s) => s.add);
   const [size, setSize] = useState<string | null>(product.sizes.some((s) => s.name === initial?.size) ? initial!.size! : product.sizes[0]?.name ?? null);
-  const [selected, setSelected] = useState<Record<number, number[]>>(() =>
-    // Required single-choice groups start on their first option (e.g. Hot, Light roast).
-    Object.fromEntries(product.groups.map((g) => {
-      const chosen = g.options.filter((o) => initial?.modifiers?.includes(o.id)).map((o) => o.id);
-      return [g.id, chosen.length ? chosen : g.required && g.selection === 'single' ? [g.options[0].id] : []];
-    })),
-  );
+  const [choices, setChoices] = useState<Record<number, number[]>>({});
+  const initialModifiers = initial?.modifiers;
+  const selected = useMemo(() => Object.fromEntries(product.groups.map((g) => {
+    const chosen = g.options.filter((o) => (choices[g.id] ?? initialModifiers)?.includes(o.id)).map((o) => o.id);
+    // A refreshed catalog can add a required group while the product is open.
+    const first = g.options[0];
+    return [g.id, chosen.length ? chosen : g.required && g.selection === 'single' && first ? [first.id] : []];
+  })), [choices, initialModifiers, product.groups]);
   const [quantity, setQuantity] = useState(initial?.quantity ?? 1);
   const [adding, setAdding] = useState(false);
 
@@ -45,8 +46,8 @@ export function useCustomizer(product: Product, initial?: { size?: string | null
   const missing = product.groups.find((g) => g.required && !(selected[g.id]?.length));
 
   const toggle = (group: ModifierGroup, option: ModifierOption) => {
-    setSelected((s) => {
-      const current = s[group.id] ?? [];
+    setChoices((s) => {
+      const current = s[group.id] ?? selected[group.id] ?? [];
       if (group.selection === 'single') {
         if (current.includes(option.id)) return group.required ? s : { ...s, [group.id]: [] };
         return { ...s, [group.id]: [option.id] };

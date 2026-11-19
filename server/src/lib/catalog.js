@@ -6,6 +6,8 @@ import { fail, money } from './http.js';
 import { isInSeason, seasonLabel } from './store.js';
 
 export const BEANS_CATEGORY_SLUG = 'coffee-beans';
+export const BEAN_GRIND_SLUG = 'bean-grind';
+export const beanSizeKey = (size) => String(size ?? '').replace(/\s+/g, '').toLowerCase();
 
 // ── Images ──────────────────────────────────────────────────────────────────
 
@@ -178,14 +180,17 @@ export async function priceLine(input, preloaded = null) {
   if (!product.is_available || product.category_active === 0 || !isInSeason(product)) fail(422, `${product.name} is not on the menu right now.`);
   if (product.is_sold_out) fail(422, `Sorry, ${product.name} is currently unavailable.`);
 
-  const sizeName = input.size_name ? String(input.size_name) : null;
+  let sizeName = input.size_name ? String(input.size_name) : null;
   let price = product.price;
   let variantImage = null;
   const availableSizes = product.variants.filter((v) => v.is_available);
 
   if (sizeName) {
-    const variant = availableSizes.find((v) => v.size_name === sizeName);
+    const variant = availableSizes.find((v) => v.size_name === sizeName)
+      ?? (product.category_slug === BEANS_CATEGORY_SLUG
+        ? availableSizes.find((v) => beanSizeKey(v.size_name) === beanSizeKey(sizeName)) : null);
     if (!variant) fail(422, `That size is not available for ${product.name}.`);
+    sizeName = variant.size_name;
     price = variant.price;
     variantImage = variant.image;
   } else if (availableSizes.length) {
@@ -206,6 +211,13 @@ export async function priceLine(input, preloaded = null) {
   for (const group of groups.values()) {
     const count = chosen.filter((m) => m.modifier_group_id === group.id).length;
     if (group.selection === 'single' && count > 1) fail(422, `Please pick just one ${group.name.toLowerCase()} option.`);
+    // Bags saved before grind was added represent whole beans.
+    if (group.slug === BEAN_GRIND_SLUG && count === 0) {
+      const wholeBean = group.modifiers.find((m) => m.name.trim().toLowerCase() === 'whole bean');
+      if (!wholeBean) fail(422, `Please choose a grind for ${product.name}.`);
+      chosen.push(wholeBean);
+      continue;
+    }
     if (group.is_required && group.modifiers.length && count === 0) fail(422, `Please choose: ${group.name}.`);
   }
 

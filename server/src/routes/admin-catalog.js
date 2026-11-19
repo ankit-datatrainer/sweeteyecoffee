@@ -6,10 +6,10 @@ import { Router } from 'express';
 import { config } from '../config.js';
 import { first, query, transaction, nowUtc } from '../db.js';
 import { fail, money, optionalString, requireString } from '../lib/http.js';
-import { baseUrl, forgetImage, imageUrl } from '../lib/catalog.js';
+import { baseUrl, BEAN_GRIND_SLUG, BEANS_CATEGORY_SLUG, forgetImage, imageUrl } from '../lib/catalog.js';
 import { requireAdmin } from '../lib/auth.js';
 import { getSettings, normalizeHours, displayTimezone, TIMEZONES } from '../lib/store.js';
-import { couponLabel } from '../lib/pricing.js';
+import { couponCategoryIds, couponLabel } from '../lib/pricing.js';
 
 /**
  * Staff editing of the menu and shop settings — the parts of the Laravel admin
@@ -84,7 +84,8 @@ adminCatalogRoutes.get('/admin/products/form', async (req, res) => {
     query(
       `SELECT g.id, g.name, g.slug, g.selection, g.is_required,
               (SELECT GROUP_CONCAT(m.name ORDER BY m.sort_order, m.id SEPARATOR ', ') FROM modifiers m WHERE m.modifier_group_id = g.id AND m.is_active = 1) AS options
-         FROM modifier_groups g ORDER BY g.sort_order, g.id`,
+         FROM modifier_groups g WHERE g.slug <> ? ORDER BY g.sort_order, g.id`,
+      [BEAN_GRIND_SLUG],
     ),
   ]);
 
@@ -164,11 +165,13 @@ async function saveProductExtras(conn, productId, data, now) {
   }
 
   await conn.query('DELETE FROM modifier_group_product WHERE product_id = ?', [productId]);
-  if (data.groupIds.length) {
-    const [valid] = await conn.query('SELECT id FROM modifier_groups WHERE id IN (?)', [data.groupIds]);
-    for (const g of valid) {
-      await conn.query('INSERT INTO modifier_group_product (product_id, modifier_group_id) VALUES (?, ?)', [productId, g.id]);
-    }
+  const [valid] = await conn.query(
+    `SELECT g.id FROM modifier_groups g JOIN categories c ON c.id = ?
+      WHERE (g.slug = ? AND c.slug = ?) OR (g.slug <> ? AND g.id IN (?))`,
+    [data.categoryId, BEAN_GRIND_SLUG, BEANS_CATEGORY_SLUG, BEAN_GRIND_SLUG, data.groupIds.length ? data.groupIds : [null]],
+  );
+  if (valid.length) {
+    await conn.query('INSERT INTO modifier_group_product (product_id, modifier_group_id) VALUES ?', [valid.map((g) => [productId, g.id])]);
   }
 }
 
@@ -457,6 +460,7 @@ function serializeCoupon(c) {
     value: c.value,
     label: couponLabel(c),
     min_order_amount: c.min_order_amount,
+    excluded_category_ids: couponCategoryIds(c),
     max_discount: c.max_discount,
     max_uses: c.max_uses,
     used_count: c.used_count,
@@ -472,6 +476,16 @@ adminCatalogRoutes.get('/admin/coupons', async (_req, res) => {
   res.json({ coupons: rows.map(serializeCoupon) });
 });
 
+adminCatalogRoutes.get('/admin/coupons/:id', async (req, res) => {
+  const isNew = req.params.id === 'new';
+  const [coupon, categories] = await Promise.all([
+    isNew ? null : first('SELECT * FROM coupons WHERE id = ?', [Number(req.params.id)]),
+    query('SELECT id, name, slug FROM categories ORDER BY sort_order, id'),
+  ]);
+  if (!isNew && !coupon) fail(404, 'Coupon not found.');
+  res.json({ coupon: coupon && serializeCoupon(coupon), categories });
+});
+
 async function readCouponBody(body = {}, ignoreId = null) {
   const code = requireString(body.code, 'Please enter a coupon code.', 50).toUpperCase();
   if (!/^[A-Z0-9_-]+$/.test(code)) fail(422, 'Coupon codes can use letters, numbers, dashes and underscores.');
@@ -485,6 +499,17 @@ async function readCouponBody(body = {}, ignoreId = null) {
   if (startsAt && expiresAt && expiresAt < startsAt) fail(422, 'The expiry date must be after the start date.');
   const maxUses = number(body.max_uses, 'Max uses must be a whole number of at least 1.', { min: 1, max: 1000000, optional: true });
   if (maxUses !== null && !Number.isInteger(maxUses)) fail(422, 'Max uses must be a whole number of at least 1.');
+  let exclusions = null;
+  if (body.excluded_category_ids !== undefined) {
+    const ids = body.excluded_category_ids;
+    if (!Array.isArray(ids) || ids.some((id) => !Number.isSafeInteger(id) || id < 1) || new Set(ids).size !== ids.length) {
+      fail(422, 'Please choose valid categories to exclude.');
+    }
+    if (ids.length && (await query('SELECT id FROM categories WHERE id IN (?)', [ids])).length !== ids.length) {
+      fail(422, 'One of the selected categories is no longer available.');
+    }
+    exclusions = JSON.stringify(ids);
+  }
   return {
     code,
     type,
@@ -495,6 +520,7 @@ async function readCouponBody(body = {}, ignoreId = null) {
     startsAt,
     expiresAt,
     isActive: body.is_active !== false,
+    exclusions,
   };
 }
 
@@ -502,9 +528,9 @@ adminCatalogRoutes.post('/admin/coupons', async (req, res) => {
   const d = await readCouponBody(req.body);
   const now = nowUtc();
   const r = await query(
-    `INSERT INTO coupons (code, type, value, min_order_amount, max_discount, max_uses, used_count, starts_at, expires_at, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)`,
-    [d.code, d.type, d.value, d.minOrder, d.maxDiscount, d.maxUses, d.startsAt, d.expiresAt, bool(d.isActive), now, now],
+    `INSERT INTO coupons (code, type, value, min_order_amount, max_discount, max_uses, used_count, starts_at, expires_at, is_active, excluded_category_ids, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`,
+    [d.code, d.type, d.value, d.minOrder, d.maxDiscount, d.maxUses, d.startsAt, d.expiresAt, bool(d.isActive), d.exclusions, now, now],
   );
   res.status(201).json({ id: r.insertId, message: 'Coupon created successfully.' });
 });
@@ -515,8 +541,8 @@ adminCatalogRoutes.put('/admin/coupons/:id', async (req, res) => {
   const d = await readCouponBody(req.body, id);
   await query(
     `UPDATE coupons SET code = ?, type = ?, value = ?, min_order_amount = ?, max_discount = ?, max_uses = ?,
-            starts_at = ?, expires_at = ?, is_active = ?, updated_at = ? WHERE id = ?`,
-    [d.code, d.type, d.value, d.minOrder, d.maxDiscount, d.maxUses, d.startsAt, d.expiresAt, bool(d.isActive), nowUtc(), id],
+            starts_at = ?, expires_at = ?, is_active = ?, excluded_category_ids = COALESCE(?, excluded_category_ids), updated_at = ? WHERE id = ?`,
+    [d.code, d.type, d.value, d.minOrder, d.maxDiscount, d.maxUses, d.startsAt, d.expiresAt, bool(d.isActive), d.exclusions, nowUtc(), id],
   );
   res.json({ id, message: 'Coupon updated successfully.' });
 });

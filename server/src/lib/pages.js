@@ -60,19 +60,22 @@ export function cleanGallery(value) {
     .filter((v) => v?.src)
     .map((v) => ({ src: safeContentPath(v.src), caption: String(v.caption ?? '').slice(0, 500) }));
 }
-export async function readPages(base, admin = false) {
+export async function readPages(base, admin = false, page = null) {
   let contents = [],
     sections = [];
+  const definitions = page ? [[page, pageDefinition(page)]] : Object.entries(pageSchema);
+  const where = page ? ' WHERE page = ?' : '';
+  const params = page ? [page] : [];
   try {
     [contents, sections] = await Promise.all([
-      query('SELECT page, field, value FROM page_contents'),
-      query('SELECT * FROM page_sections ORDER BY sort_order, id'),
+      query(`SELECT page, field, value FROM page_contents${where}`, params),
+      query(`SELECT * FROM page_sections${where} ORDER BY sort_order, id`, params),
     ]);
   } catch (e) {
     if (e.code !== 'ER_NO_SUCH_TABLE') throw e;
   }
   return Object.fromEntries(
-    Object.entries(pageSchema).map(([key, definition]) => {
+    definitions.map(([key, definition]) => {
       const saved = Object.fromEntries(contents.filter((r) => r.page === key).map((r) => [r.field, r.value]));
       const fields = {},
         hidden = [];

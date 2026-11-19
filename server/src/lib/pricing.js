@@ -9,19 +9,36 @@ import { packageWeights, upsRates } from './ups.js';
 
 const utc = (value) => (value ? new Date(`${String(value).replace(' ', 'T')}Z`) : null);
 
-export function couponProblem(coupon, subtotal) {
+/** Laravel stores null for the default bean exclusion and [] for no exclusions. */
+export function couponCategoryIds(coupon) {
+  if (coupon.excluded_category_ids == null) return null;
+  const value = typeof coupon.excluded_category_ids === 'string'
+    ? JSON.parse(coupon.excluded_category_ids) : coupon.excluded_category_ids;
+  return Array.isArray(value) ? value.map(Number) : null;
+}
+
+function eligibleSubtotal(coupon, lines) {
+  const ids = couponCategoryIds(coupon);
+  const eligible = lines.filter(({ product }) => ids === null
+    ? product.category_slug !== BEANS_CATEGORY_SLUG
+    : !ids.includes(Number(product.category_id)));
+  return money(eligible.reduce((sum, line) => sum + line.total, 0));
+}
+
+function couponProblem(coupon, subtotal) {
   const now = new Date();
   if (!coupon.is_active) return 'This coupon is not valid.';
   if (coupon.starts_at && utc(coupon.starts_at) > now) return 'This coupon is not valid yet.';
   if (coupon.expires_at && utc(coupon.expires_at) < now) return 'This coupon has expired.';
   if (coupon.max_uses && coupon.used_count >= coupon.max_uses) return 'This coupon has reached its usage limit.';
+  if (subtotal <= 0) return 'This coupon does not apply to the items in your bag.';
   if (coupon.min_order_amount && subtotal < coupon.min_order_amount) {
-    return `Minimum order of $${Number(coupon.min_order_amount).toFixed(2)} required.`;
+    return `Add at least $${Number(coupon.min_order_amount).toFixed(2)} in eligible items to use this coupon.`;
   }
   return null;
 }
 
-export function couponDiscount(coupon, subtotal) {
+function couponDiscount(coupon, subtotal) {
   let discount = 0;
   if (coupon.type === 'percentage') {
     discount = subtotal * (coupon.value / 100);
@@ -29,13 +46,13 @@ export function couponDiscount(coupon, subtotal) {
   } else if (coupon.type === 'fixed') {
     discount = Math.min(coupon.value, subtotal);
   }
-  return money(discount);
+  return money(Math.min(discount, subtotal));
 }
 
 export const couponLabel = (coupon) =>
   coupon.type === 'percentage' ? `${Math.round(coupon.value)}% off` : `$${Number(coupon.value).toFixed(2)} off`;
 
-export async function findCoupon(code) {
+async function findCoupon(code) {
   const clean = String(code || '').trim().toUpperCase();
   if (!clean) return null;
   return first('SELECT * FROM coupons WHERE code = ?', [clean]);
@@ -143,12 +160,13 @@ export async function quote({ items, coupon_code, pickup_method, address, shippi
   let couponMessage = null;
   if (coupon_code) {
     const found = await findCoupon(coupon_code);
-    const problem = found ? couponProblem(found, subtotal) : 'Invalid coupon code.';
+    const eligible = found ? eligibleSubtotal(found, lines) : 0;
+    const problem = found ? couponProblem(found, eligible) : 'Invalid coupon code.';
     if (problem) {
       couponMessage = problem;
     } else {
       coupon = found;
-      discount = couponDiscount(found, subtotal);
+      discount = couponDiscount(found, eligible);
     }
   }
 

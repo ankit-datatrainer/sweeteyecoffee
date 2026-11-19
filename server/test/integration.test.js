@@ -60,9 +60,14 @@ before(async () => {
   ({ readPages, cleanSection } = await import('../src/lib/pages.js'));
   ({ originalPath } = await import('../src/lib/images.js'));
   const { migrate } = await import('../database/migrate.js');
+  // Exercise the upgrade from the old website schema even when the local catalog is newer.
+  if ((await query("SHOW COLUMNS FROM coupons LIKE 'excluded_category_ids'")).length)
+    await query('ALTER TABLE coupons DROP COLUMN excluded_category_ids');
+  await query("DELETE FROM modifier_groups WHERE slug = 'bean-grind'");
   await migrate();
   await migrate();
-  const { signUserToken } = await import('../src/lib/auth.js');
+  const { hashPassword, signUserToken } = await import('../src/lib/auth.js');
+  const ownerHash = await hashPassword('Coffee fixture password');
   tokens = {};
   for (const [role, name] of [
     ['customer', 'customer'],
@@ -72,7 +77,7 @@ before(async () => {
   ]) {
     const r = await query(
       'INSERT INTO users (name,email,password,role,created_at,updated_at) VALUES (?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP())',
-      [name, `${name}@example.invalid`, 'fixture-password-hash', role],
+      [name, `${name}@example.invalid`, role === 'super_admin' ? ownerHash : 'fixture-password-hash', role],
     );
     const user = await first('SELECT * FROM users WHERE id=?', [r.insertId]);
     tokens[name] = { id: user.id, token: signUserToken(user) };
@@ -147,7 +152,7 @@ test('catalog, photos and standard ordering keep working', async () => {
   product = catalog.body.products.find((p) => p.is_beans && p.orderable);
   assert.ok(product);
   assert.deepEqual(
-    product.sizes.map((s) => s.name),
+    product.sizes.map((s) => s.name.replace(/\s+/g, '')),
     ['12oz', '2lb', '5lb'],
   );
   const modifiers = product.groups.filter((g) => g.required).map((g) => g.options[0].id);
@@ -172,7 +177,7 @@ test('catalog, photos and standard ordering keep working', async () => {
     price: 0.01,
   });
   assert.equal(line.status, 200);
-  assert.equal(line.body.line.unit_price, product.sizes.find((s) => s.name === '5lb').price);
+  assert.equal(line.body.line.unit_price, product.sizes.find((s) => s.name.replace(/\s+/g, '') === '5lb').price);
   assert.equal(
     (await api('POST', '/cart/line', { product_id: product.id, size_name: '3lb', quantity: 1, modifiers })).status,
     422,
@@ -201,6 +206,7 @@ test('catalog, photos and standard ordering keep working', async () => {
   assert.equal(store.status, 200);
   assert.equal(store.body.timezone, 'America/Chicago');
 });
+
 test('super admin page editing, gallery, hiding and extra sections share the public content', async () => {
   assert.equal((await api('PUT', '/admin/pages/home', { fields: { 'hero.title': 'Denied' } }, 'customer')).status, 403);
   assert.equal((await api('PUT', '/admin/pages/home', { fields: { 'hero.title': 'Denied' } }, 'staff')).status, 403);
@@ -560,4 +566,102 @@ test('account deletion requires the password and preserves accounts awaiting sta
   assert.equal(repeated.status, 202);
   assert.equal(repeated.body.reference, firstRequest.body.reference);
   assert.equal((await api('GET', '/auth/me', undefined, 'delete-review')).status, 200);
+});
+
+test('the grind choice is saved and a legacy bag still means whole beans', async () => {
+  const grind = product.groups.find((group) => group.slug === 'bean-grind');
+  assert.equal(grind.required, true);
+  assert.deepEqual(grind.options.map((option) => option.name), ['Whole bean', 'Ground']);
+  const baseLine = { ...selection, size_name: selection.size, quantity: 1, modifiers: selection.modifiers.filter((id) => id !== grind.options[0].id) };
+  const oldLine = await api('POST', '/cart/line', baseLine);
+  const groundLine = { ...baseLine, modifiers: [...baseLine.modifiers, grind.options[1].id] };
+  const ground = await api('POST', '/cart/line', groundLine);
+  assert.equal(oldLine.status, 200);
+  assert.equal(ground.status, 200);
+  assert.match(oldLine.body.line.modifiers_label, /Whole bean/);
+  assert.match(ground.body.line.modifiers_label, /Ground/);
+  assert.equal(oldLine.body.line.unit_price, ground.body.line.unit_price);
+  assert.notEqual(oldLine.body.line.key, ground.body.line.key);
+  assert.equal((await api('POST', '/cart/line', { ...groundLine, modifiers: [...groundLine.modifiers, grind.options[0].id] })).status, 422);
+  const order = await api('POST', '/checkout', { items: [oldLine.body.line, ground.body.line], pickup_method: 'in_store' }, 'customer');
+  assert.equal(order.status, 201);
+  assert.deepEqual(order.body.order.items.map((line) => line.modifiers_label.split(', ').at(-1)), ['Whole bean', 'Ground']);
+
+  const created = await api('POST', '/admin/products', { name: 'Fixture beans', category_id: product.category_id, price: 10 }, 'owner');
+  assert.equal(created.status, 201);
+  const newProduct = await api('GET', `/products/${created.body.id}`);
+  assert.deepEqual(newProduct.body.product.groups.find((group) => group.slug === 'bean-grind').options, grind.options);
+  assert.equal((await api('DELETE', `/admin/products/${created.body.id}`, undefined, 'owner')).status, 200);
+});
+
+test('coupon settings are shared, exclude categories across bag and checkout, and preserve existing choices', async () => {
+  const catalog = (await api('GET', '/catalog')).body.products;
+  const merch = catalog.find((p) => p.category_slug === 'accessories' && p.orderable);
+  const drink = catalog.find((p) => p.category_slug === 'espresso' && p.orderable);
+  assert.ok(merch && drink);
+  const items = [product, merch, drink].map((p) => ({
+    product_id: p.id, size_name: p.sizes[0]?.name, quantity: 1, modifiers: p.groups.filter((g) => g.required).map((g) => g.options[0].id),
+  }));
+  const body = { code: 'FIXTURE10', type: 'percentage', value: 10 };
+  const excluded = [product.category_id, merch.category_id];
+  assert.equal((await api('POST', '/admin/coupons', body, 'customer')).status, 403);
+  assert.equal((await api('POST', '/admin/coupons', { ...body, excluded_category_ids: [999999] }, 'owner')).status, 422);
+  const created = await api('POST', '/admin/coupons', body, 'owner');
+  assert.equal(created.status, 201);
+  const coupon = `/admin/coupons/${created.body.id}`;
+  const info = await api('GET', coupon, undefined, 'owner');
+  assert.equal(info.body.coupon.excluded_category_ids, null);
+  assert.ok(info.body.categories.some((c) => c.id === merch.category_id));
+  const apply = (lines) => api('POST', '/coupon/apply', { items: lines, coupon_code: body.code });
+  assert.match((await apply([items[0]])).body.message, /does not apply/);
+  assert.equal((await apply([items[1]])).status, 200);
+
+  assert.equal((await api('PUT', coupon, { ...body, excluded_category_ids: excluded }, 'owner')).status, 200);
+  assert.equal((await api('PUT', coupon, { ...body, max_discount: 99 }, 'owner')).status, 200);
+  assert.deepEqual((await api('GET', coupon, undefined, 'owner')).body.coupon.excluded_category_ids, excluded);
+  assert.equal((await apply(items.slice(0, 2))).status, 422);
+  const orderBody = { items, coupon_code: body.code, pickup_method: 'in_store' };
+  const quote = await api('POST', '/checkout/quote', orderBody);
+  const eligible = quote.body.items.find((l) => l.product_id === drink.id).total;
+  assert.equal(quote.body.discount, Math.round(eligible * 10) / 100);
+  assert.equal((await apply(items)).body.total, quote.body.total);
+  const checkout = await api('POST', '/checkout', orderBody, 'other');
+  assert.equal(checkout.status, 201);
+  assert.equal(checkout.body.order.discount_amount, quote.body.discount);
+  assert.equal(checkout.body.order.total_amount, quote.body.total);
+  assert.equal((await api('POST', '/checkout', { ...orderBody, items: items.slice(0, 2) }, 'other')).status, 422);
+
+  assert.equal((await api('PUT', coupon, { ...body, type: 'fixed', value: 100, min_order_amount: eligible + 1, excluded_category_ids: excluded }, 'owner')).status, 200);
+  assert.match((await apply(items)).body.message, /in eligible items/);
+  assert.equal((await api('PUT', coupon, { ...body, type: 'fixed', value: 100 }, 'owner')).status, 200);
+  assert.equal((await apply(items)).body.discount, eligible);
+  assert.equal((await api('PUT', coupon, { ...body, excluded_category_ids: [] }, 'owner')).status, 200);
+  assert.equal((await apply([items[0]])).status, 200);
+});
+
+test('the owner signs in with Laravel bcrypt and the public privacy policy and inbox work', async () => {
+  const login = await api('POST', '/auth/login', { email: 'owner@example.invalid', password: 'Coffee fixture password' });
+  assert.equal(login.status, 200);
+  assert.equal(login.body.user.role, 'super_admin');
+  assert.equal(login.body.user.is_admin, true);
+  tokens.owner.token = login.body.token;
+  assert.equal((await api('GET', '/admin/summary', undefined, 'owner')).status, 200);
+  const privacy = await api('GET', '/pages/privacy');
+  assert.equal(privacy.status, 200);
+  assert.match(privacy.body.page.fields['body.text'], /Sweet Eye Coffee app/);
+  assert.match(privacy.body.page.fields['body.text'], /Delete your account/);
+  assert.equal((await api('GET', '/admin/tickets', undefined, 'customer')).status, 403);
+  const ticket = await api('POST', '/tickets', { subject: 'Fixture question', message: 'Is my order ready?' }, 'customer');
+  assert.equal(ticket.status, 201);
+  const ticketId = ticket.body.ticket.id;
+  const tickets = await api('GET', '/admin/tickets', undefined, 'owner');
+  assert.ok(tickets.body.tickets.some((t) => t.id === ticketId));
+  assert.equal((await api('PATCH', `/admin/tickets/${ticketId}`, { status: 'resolved', admin_response: 'Your order is ready.' }, 'owner')).status, 200);
+  assert.equal((await api('GET', `/tickets/${ticketId}`, undefined, 'customer')).body.ticket.admin_response, 'Your order is ready.');
+  assert.equal((await api('POST', '/contact', { name: 'Fixture visitor', email: 'visitor@example.invalid', message: 'When do you open?' })).status, 201);
+  const messages = await api('GET', '/admin/contact-messages', undefined, 'owner');
+  const message = messages.body.messages.find((m) => m.email === 'visitor@example.invalid');
+  assert.equal(message.is_read, false);
+  assert.equal((await api('PATCH', `/admin/contact-messages/${message.id}/read`, {}, 'owner')).status, 200);
+  assert.equal((await api('GET', '/admin/contact-messages', undefined, 'owner')).body.messages.find((m) => m.id === message.id).is_read, true);
 });

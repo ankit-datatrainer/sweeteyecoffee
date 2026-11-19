@@ -225,7 +225,16 @@ See [STORES.md](STORES.md). They already point at `https://app.sweeteyecoffee.co
 
 ## November 2026 pages, subscriptions and labels
 
-Run `npm --prefix server run migrate` after backing up the deployment database and before restarting the updated API. This is additive and repeatable. It creates the same page/subscription/UPS tables and order fields as the Laravel migrations. No Laravel runtime is needed by the app.
+Run `npm --prefix server run migrate` after backing up the deployment database and before restarting the updated API. This is additive and repeatable. It creates the same page, subscription, UPS, coupon exclusion and grind data used by the Laravel website. No Laravel runtime is needed by the app.
+
+### Verify coupons, bean choices and owner access
+
+1. In the app, open **Account → Sign in** and use your website admin email and password. Open **Super Admin → Coupons** and edit a code. In **Excluded categories**, select **Coffee Beans** and **Accessories** if both should stay at full price. Coffee beans are excluded by default. You can clear either selection when a particular code should apply. Save and reopen the code to confirm the settings.
+2. Apply the code to a bag containing a drink, coffee beans and merchandise. The discount and any coupon minimum use only the drink amount. A bag containing only excluded categories rejects the code. For an existing code, repeat the check before adjusting a live promotion.
+3. In **Menu → Coffee Beans**, choose a bag size and select **Whole bean** or **Ground**. Add each choice to the bag. They should appear as two lines, with the chosen grind visible on the order. Older app bags without a grind are treated as whole bean. Coffee Club plan discounts are configured separately from coupon codes.
+4. Open **Account → Privacy policy** while signed out. The public store listing URL is [Sweet Eye Coffee Privacy Policy](https://app.sweeteyecoffee.com/legal/privacy). Owners can edit this page under **Super Admin → Website & app pages**. The **Support inbox** shows the shared support tickets and contact messages.
+
+The Laravel site must also run its coupon-category and bean-grind release to enforce the same coupon settings in its checkout. Both apps save the settings in the shared database.
 
 Subscription setup and webhook events are described in [PARITY-REVIEW.md](PARITY-REVIEW.md). Keep the website's `APP_KEY` privately as `LARAVEL_APP_KEY` in `server/.env` so existing encrypted subscription addresses and shipment labels remain readable. Do not rotate or publish it. Subscription billing has dedicated Stripe secrets and is independent of the one-time `PAYMENTS_MODE` setting.
 

@@ -6,19 +6,21 @@ import { backTo, confirmAction, FormSection, SwitchRow, useStaffOnly } from '@/c
 import { PageScreen } from '@/components/layout';
 import { toast } from '@/components/toast';
 import { Button, Card, Chip, Field, Notice, Skeleton, T } from '@/components/ui';
-import type { AdminCoupon } from '@/lib/admin';
+import type { AdminCategory, AdminCoupon } from '@/lib/admin';
 import { del, errorMessage, get, post, put } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { space } from '@/theme';
 
 const text = (v: number | null) => (v === null || v === undefined ? '' : String(v));
+type CouponForm = { coupon: AdminCoupon | null; categories: Pick<AdminCategory, 'id' | 'name' | 'slug'>[] };
 
 export default function AdminCouponScreen() {
   const staff = useStaffOnly();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === 'new';
 
-  const [loaded, setLoaded] = useState(isNew);
+  const [form, setForm] = useState<CouponForm | null>(null);
+  const [exclusions, setExclusions] = useState<number[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [usedCount, setUsedCount] = useState(0);
   const [code, setCode] = useState('');
@@ -33,11 +35,15 @@ export default function AdminCouponScreen() {
   const [busy, setBusy] = useState<'save' | 'delete' | null>(null);
 
   useEffect(() => {
-    if (!staff || isNew) return;
-    get<{ coupons: AdminCoupon[] }>('/admin/coupons')
-      .then((r) => {
-        const c = r.coupons.find((x) => x.id === Number(id));
-        if (!c) throw new Error('Coupon not found.');
+    if (!staff) return;
+    let current = true;
+    get<CouponForm>(`/admin/coupons/${id}`)
+      .then((data) => {
+        if (!current) return;
+        setForm(data);
+        const c = data.coupon;
+        setExclusions(c?.excluded_category_ids?.filter((id) => data.categories.some((category) => category.id === id)) ?? null);
+        if (!c) return;
         setCode(c.code);
         setType(c.type);
         setValue(text(c.value));
@@ -48,10 +54,12 @@ export default function AdminCouponScreen() {
         setExpiresAt(c.expires_at?.replace('T', ' ') ?? '');
         setActive(c.is_active);
         setUsedCount(c.used_count);
-        setLoaded(true);
       })
-      .catch((e) => setError(errorMessage(e)));
-  }, [staff, isNew, id]);
+      .catch((e) => { if (current) setError(errorMessage(e)); });
+    return () => { current = false; };
+  }, [staff, id]);
+
+  const selected = exclusions ?? form?.categories.filter((category) => category.slug === 'coffee-beans').map((category) => category.id) ?? [];
 
   const save = async () => {
     setBusy('save');
@@ -66,6 +74,7 @@ export default function AdminCouponScreen() {
         starts_at: startsAt || null,
         expires_at: expiresAt || null,
         is_active: active,
+        excluded_category_ids: exclusions ?? undefined,
       };
       const r = isNew ? await post<{ message: string }>('/admin/coupons', body) : await put<{ message: string }>(`/admin/coupons/${id}`, body);
       haptic.success();
@@ -97,9 +106,9 @@ export default function AdminCouponScreen() {
     <PageScreen
       title={isNew ? 'New coupon' : code || 'Coupon'}
       contentStyle={{ maxWidth: 680 }}
-      footer={loaded ? <Button title={isNew ? 'Create coupon' : 'Save changes'} icon="check" loading={busy === 'save'} onPress={save} /> : undefined}>
+      footer={staff && form ? <Button title={isNew ? 'Create coupon' : 'Save changes'} icon="check" loading={busy === 'save'} disabled={busy === 'delete'} onPress={save} /> : undefined}>
       {error && <Notice tone="danger">{error}</Notice>}
-      {!loaded ? (
+      {!staff || !form ? (
         !error && <Skeleton style={{ height: 300 }} />
       ) : (
         <Animated.View entering={FadeInDown}>
@@ -113,6 +122,19 @@ export default function AdminCouponScreen() {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <Field label={type === 'percentage' ? 'Percent off' : 'Dollars off'} icon={type === 'percentage' ? 'percent' : 'dollar-sign'} value={value} onChangeText={setValue} keyboardType="decimal-pad" containerStyle={{ flex: 1 }} />
               {type === 'percentage' && <Field label="Max discount $ (optional)" value={maxDiscount} onChangeText={setMaxDiscount} keyboardType="decimal-pad" containerStyle={{ flex: 1 }} />}
+            </View>
+          </FormSection>
+
+          <FormSection title="Excluded categories" hint="Selected categories stay at full price. Accessories includes merchandise. Coupon minimums count eligible items only.">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {form.categories.map((category) => (
+                <Chip key={category.id} label={category.name} selected={selected.includes(category.id)} onPress={() => {
+                  setExclusions((current) => {
+                    const ids = current ?? selected;
+                    return ids.includes(category.id) ? ids.filter((id) => id !== category.id) : [...ids, category.id];
+                  });
+                }} />
+              ))}
             </View>
           </FormSection>
 

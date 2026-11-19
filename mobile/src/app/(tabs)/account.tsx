@@ -32,7 +32,7 @@ export default function AccountScreen() {
     { icon: 'image', label: 'Gallery', onPress: () => router.push('/gallery') },
     { icon: 'mail', label: 'Contact us', onPress: () => router.push('/contact') },
     ...(store ? [{ icon: 'phone' as const, label: `Call ${store.phone_display}`, onPress: () => Linking.openURL(`tel:${store.phone}`) }] : []),
-    { icon: 'file-text', label: 'Privacy, terms & refunds', onPress: () => router.push('/legal/privacy') },
+    { icon: 'file-text', label: 'Privacy policy', onPress: () => router.push('/legal/privacy') },
     { icon: 'repeat', label: 'Coffee subscriptions', onPress: () => router.push('/subscriptions') },
   ];
 
@@ -80,7 +80,7 @@ export default function AccountScreen() {
             <Section
               title="Account"
               items={[
-                ...(user.is_admin ? [{ icon: 'grid' as const, label: 'Staff dashboard', onPress: () => router.push('/admin'), tone: 'gold' as const }] : []),
+                ...(user.is_admin ? [{ icon: 'grid' as const, label: user.role === 'super_admin' ? 'Super Admin' : 'Staff dashboard', onPress: () => router.push('/admin'), tone: 'gold' as const }] : []),
                 { icon: 'user', label: 'Profile & password', onPress: () => router.push('/profile') },
                 { icon: 'clock', label: 'Order history', onPress: () => router.navigate('/orders') },
                 { icon: 'life-buoy', label: 'Support tickets', onPress: () => router.push('/support') },

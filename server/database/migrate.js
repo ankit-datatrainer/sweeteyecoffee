@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { pool, query } from '../src/db.js';
+import { pool, query, transaction, nowUtc } from '../src/db.js';
+import { BEAN_GRIND_SLUG, BEANS_CATEGORY_SLUG } from '../src/lib/catalog.js';
 
 // Additive and repeatable. Uses the same table/column names as the Laravel migrations.
 export async function migrate() {
@@ -41,11 +42,43 @@ export async function migrate() {
     created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
+  if (!(await query("SHOW COLUMNS FROM coupons LIKE 'excluded_category_ids'")).length) {
+    try {
+      await query('ALTER TABLE coupons ADD COLUMN excluded_category_ids JSON NULL');
+    } catch (error) {
+      if (error.code !== 'ER_DUP_FIELDNAME') throw error;
+    }
+  }
+
+  await transaction(async (conn) => {
+    const now = nowUtc();
+    const [group] = await conn.query(
+      `INSERT INTO modifier_groups (slug, name, selection, is_required, sort_order, created_at, updated_at)
+       VALUES (?, 'Grind', 'single', 1, 1, ?, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`,
+      [BEAN_GRIND_SLUG, now, now],
+    );
+    const groupId = group.insertId;
+    const [existing] = await conn.query('SELECT id FROM modifiers WHERE modifier_group_id = ? LIMIT 1', [groupId]);
+    if (!existing.length) {
+      const options = ['Whole bean', 'Ground'].map((name, index) => [groupId, name, 0, index, 1, now, now]);
+      await conn.query(
+        'INSERT INTO modifiers (modifier_group_id, name, price, sort_order, is_active, created_at, updated_at) VALUES ?',
+        [options],
+      );
+    }
+    await conn.query(
+      `INSERT INTO modifier_group_product (product_id, modifier_group_id)
+       SELECT p.id, ? FROM products p JOIN categories c ON c.id = p.category_id WHERE c.slug = ?
+       ON DUPLICATE KEY UPDATE product_id = modifier_group_product.product_id`,
+      [groupId, BEANS_CATEGORY_SLUG],
+    );
+  });
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     await migrate();
-    console.log('Page content, subscriptions and UPS schema is up to date.');
+    console.log('Page content, subscriptions, UPS, coupon exclusions and bean grind are up to date.');
   } finally {
     await pool.end();
   }

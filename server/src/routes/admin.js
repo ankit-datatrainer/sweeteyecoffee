@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { query, first, nowUtc } from '../db.js';
-import { fail } from '../lib/http.js';
+import { query, first, nowUtc, toIso } from '../db.js';
+import { fail, requireString } from '../lib/http.js';
 import { baseUrl } from '../lib/catalog.js';
 import { requireAdmin } from '../lib/auth.js';
 import { assertStatus, loadOrder, loadOrdersFor, serializeOrder, pickupMethodLabel } from '../lib/orders.js';
 import { sendMail } from '../lib/mail.js';
 import { config } from '../config.js';
 import { displayTimezone } from '../lib/store.js';
+import { serializeTicket } from './orders.js';
 
 /** Staff tools inside the app: live order queue, status updates, sold-out switches. */
 export const adminRoutes = Router();
@@ -94,5 +95,51 @@ adminRoutes.patch('/admin/products/:id', async (req, res) => {
   }
   if (!updates.length) fail(422, 'Nothing to update.');
   await query(`UPDATE products SET ${updates.join(', ')}, updated_at = ? WHERE id = ?`, [...params, nowUtc(), product.id]);
+  res.json({ ok: true });
+});
+
+const ticketStatuses = ['open', 'in_progress', 'resolved', 'closed'];
+const inboxCursor = (req) => {
+  const before = req.query.before ? Number(req.query.before) : null;
+  if (before !== null && (!Number.isSafeInteger(before) || before <= 0)) fail(422, 'Invalid inbox cursor.');
+  return before;
+};
+
+adminRoutes.get('/admin/tickets', async (req, res) => {
+  const before = inboxCursor(req);
+  const rows = await query(
+    `SELECT t.*, u.name AS customer_name, u.email AS customer_email FROM support_tickets t
+       JOIN users u ON u.id = t.user_id ${before ? 'WHERE t.id < ?' : ''} ORDER BY t.id DESC LIMIT 50`,
+    before ? [before] : [],
+  );
+  res.json({ tickets: rows.map((t) => ({ ...serializeTicket(t), customer_name: t.customer_name, customer_email: t.customer_email })) });
+});
+
+adminRoutes.patch('/admin/tickets/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const status = req.body?.status;
+  if (!ticketStatuses.includes(status)) fail(422, 'Please choose a ticket status.');
+  const response = requireString(req.body?.admin_response, 'Please enter a response.', 5000);
+  const now = nowUtc();
+  const result = await query(
+    'UPDATE support_tickets SET status = ?, admin_response = ?, responded_at = ?, updated_at = ? WHERE id = ?',
+    [status, response, now, now, id],
+  );
+  if (!result.affectedRows) fail(404, 'Support ticket not found.');
+  res.json({ message: 'Response saved.' });
+});
+
+adminRoutes.get('/admin/contact-messages', async (req, res) => {
+  const before = inboxCursor(req);
+  const rows = await query(
+    `SELECT id, name, email, phone, message, is_read, created_at FROM contact_messages
+       ${before ? 'WHERE id < ?' : ''} ORDER BY id DESC LIMIT 50`, before ? [before] : [],
+  );
+  res.json({ messages: rows.map((m) => ({ ...m, is_read: Boolean(m.is_read), created_at: toIso(m.created_at) })) });
+});
+
+adminRoutes.patch('/admin/contact-messages/:id/read', async (req, res) => {
+  const result = await query('UPDATE contact_messages SET is_read = 1, updated_at = ? WHERE id = ?', [nowUtc(), Number(req.params.id)]);
+  if (!result.affectedRows) fail(404, 'Contact message not found.');
   res.json({ ok: true });
 });

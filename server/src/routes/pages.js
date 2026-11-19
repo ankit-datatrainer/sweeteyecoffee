@@ -7,6 +7,10 @@ import { cleanSection, pageDefinition, readPages, savePage, storePageImage } fro
 
 export const pageRoutes = Router();
 pageRoutes.get('/pages', async (req, res) => res.json({ pages: await readPages(baseUrl(req)) }));
+pageRoutes.get('/pages/:page', async (req, res) => {
+  const { page } = req.params;
+  res.json({ page: (await readPages(baseUrl(req), false, page))[page] });
+});
 pageRoutes.use('/admin/pages', requireAdmin, (req, _res, next) => {
   if (req.user.role !== 'super_admin') fail(403, 'Only the super admin can edit pages.');
   next();

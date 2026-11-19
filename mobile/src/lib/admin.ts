@@ -20,6 +20,7 @@ export type AdminCoupon = {
   value: number;
   label: string;
   min_order_amount: number | null;
+  excluded_category_ids: number[] | null;
   max_discount: number | null;
   max_uses: number | null;
   used_count: number;

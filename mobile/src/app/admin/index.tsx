@@ -1,8 +1,8 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { AppState, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
-import { ManageTile } from '@/components/admin';
+import { ManageTile, useStaffOnly } from '@/components/admin';
 import { PageScreen } from '@/components/layout';
 import { CountUp } from '@/components/motion';
 import { StatusPill } from '@/components/order-bits';
@@ -33,7 +33,9 @@ const nextStatus = (o: Order): OrderStatus | null => {
 };
 
 export default function AdminScreen() {
+  const staff = useStaffOnly();
   const user = useAuth((s) => s.user);
+  const isOwner = user?.role === 'super_admin';
   const [filter, setFilter] = useState('active');
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [summary, setSummary] = useState<{ today_orders: number; today_revenue: number; active_orders: number; customers: number } | null>(null);
@@ -53,14 +55,11 @@ export default function AdminScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (!user?.is_admin) {
-        router.replace('/account');
-        return;
-      }
+      if (!staff) return;
       load();
       const t = setInterval(() => AppState.currentState === 'active' && load(), 20000); // live queue
       return () => clearInterval(t);
-    }, [user, load]),
+    }, [staff, load]),
   );
 
   const advance = async (o: Order) => {
@@ -79,8 +78,10 @@ export default function AdminScreen() {
     }
   };
 
+  if (!staff) return null;
+
   return (
-    <PageScreen title="Staff dashboard">
+    <PageScreen title={isOwner ? 'Super Admin' : 'Staff dashboard'}>
       <View style={styles.kpis}>
         {[
           { label: 'Orders today', value: summary?.today_orders ?? 0 },
@@ -103,11 +104,15 @@ export default function AdminScreen() {
         <ManageTile icon="package" label="Products" sub="Add, edit, photos, sizes" onPress={() => router.push('/admin/products')} />
         <ManageTile icon="grid" label="Categories" sub="Menu sections & seasons" onPress={() => router.push('/admin/categories')} />
         <ManageTile icon="toggle-right" label="Availability" sub="Sold out today" onPress={() => router.push('/admin/menu')} />
-        <ManageTile icon="sliders" label="Drink options" sub="Milk, flavours, add-ons" onPress={() => router.push('/admin/options')} />
-        <ManageTile icon="tag" label="Coupons" sub="Discount codes" onPress={() => router.push('/admin/coupons')} />
+        <ManageTile icon="sliders" label="Product options" sub="Milk, add-ons, bean grind" onPress={() => router.push('/admin/options')} />
+        <ManageTile icon="tag" label="Coupons" sub="Discounts and category exclusions" onPress={() => router.push('/admin/coupons')} />
         <ManageTile icon="settings" label="Settings" sub="Tax, curbside, delivery" onPress={() => router.push('/admin/settings')} />
         <ManageTile icon="repeat" label="Subscriptions" sub="Plans and billing status" onPress={() => router.push('/admin/subscriptions')} />
-        {user?.role === 'super_admin' && <ManageTile icon="file-text" label="Website & app pages" sub="Text, photos and sections" onPress={() => router.push('/admin/pages')} />}
+        <ManageTile icon="inbox" label="Support inbox" sub="Tickets and contact messages" onPress={() => router.push('/admin/inbox')} />
+        {isOwner && <ManageTile icon="file-text" label="Website & app pages" sub="Text, photos and sections" onPress={() => router.push('/admin/pages')} />}
+        {isOwner && <ManageTile icon="external-link" label="Website admin" sub="Customers and order exports" onPress={() => {
+          void Linking.openURL('https://sweeteyecoffee.com/admin').catch((e) => toast.error(errorMessage(e)));
+        }} />}
       </View>
 
       <T variant="overline" style={{ marginTop: space.xxl }}>Orders</T>
