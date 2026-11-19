@@ -10,13 +10,12 @@ import { PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-disp
 import { useFonts } from 'expo-font';
 import { DarkTheme, SplashScreen, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { IntroOverlay } from '@/components/brand';
 import { QuickAddHost } from '@/components/quick-add';
 import { ToastHost } from '@/components/toast';
-import { useAuth, useCatalog, useUi } from '@/store';
+import { useAuth, useCatalog } from '@/store';
 import { colors } from '@/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -38,12 +37,6 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
   });
-  const [introDone, setIntroDone] = useState(false);
-  const finishIntro = useCallback(() => {
-    setIntroDone(true);
-    useUi.getState().setIntroDone();
-  }, []);
-
   useEffect(() => {
     useCatalog.getState().load();
     useAuth.getState().hydrate();
@@ -74,7 +67,6 @@ export default function RootLayout() {
         </Stack>
         <QuickAddHost />
         <ToastHost />
-        {!introDone && <IntroOverlay onDone={finishIntro} />}
       </ThemeProvider>
     </GestureHandlerRootView>
   );

@@ -137,6 +137,7 @@ async function api(method, path, body, user) {
   });
   return { status: response.status, body: await response.json() };
 }
+
 test('catalog, photos and standard ordering keep working', async () => {
   const health = await api('GET', '/health');
   assert.equal(health.status, 200);
@@ -531,4 +532,32 @@ test('expired and repriced pending checkouts are reconciled before another agree
   assert.notEqual(repriced.body.subscription.id, pending.public_id);
   assert.equal(checkoutSessions.get(pending.checkout_session_id).status, 'expired');
   assert.equal((await first('SELECT status FROM coffee_subscriptions WHERE id=?', [pending.id])).status, 'expired');
+});
+
+test('account deletion requires the password and preserves accounts awaiting staff review', async () => {
+  const password = 'deletion-fixture-password';
+  const { hashPassword, signUserToken } = await import('../src/lib/auth.js');
+  for (const [name, role] of [['delete-now', 'customer'], ['delete-review', 'admin']]) {
+    const email = name + '@example.invalid';
+    const hash = await hashPassword(password);
+    const result = await query('INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)', [name, email, hash, role]);
+    const user = await first('SELECT * FROM users WHERE id = ?', [result.insertId]);
+    tokens[name] = { id: user.id, token: signUserToken(user) };
+  }
+  assert.equal((await api('DELETE', '/auth/me', { password })).status, 401);
+  assert.equal((await api('DELETE', '/auth/me', { password: 'incorrect' }, 'delete-now')).status, 422);
+  const deleted = await api('DELETE', '/auth/me', { password }, 'delete-now');
+  assert.equal(deleted.status, 200);
+  assert.equal(deleted.body.status, 'deleted');
+  assert.equal((await api('GET', '/auth/me', undefined, 'delete-now')).status, 401);
+
+  const [firstRequest, repeated] = await Promise.all([
+    api('DELETE', '/auth/me', { password }, 'delete-review'),
+    api('DELETE', '/auth/me', { password }, 'delete-review'),
+  ]);
+  assert.equal(firstRequest.status, 202);
+  assert.match(firstRequest.body.reference, /^DEL-/);
+  assert.equal(repeated.status, 202);
+  assert.equal(repeated.body.reference, firstRequest.body.reference);
+  assert.equal((await api('GET', '/auth/me', undefined, 'delete-review')).status, 200);
 });

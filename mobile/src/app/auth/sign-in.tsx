@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -13,6 +13,7 @@ import { useAuth } from '@/store';
 import { colors, fonts, space } from '@/theme';
 
 export default function SignInScreen() {
+  const { next } = useLocalSearchParams<{ next?: string }>();
   const signIn = useAuth((s) => s.signIn);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +28,8 @@ export default function SignInScreen() {
       await signIn(r.token, r.user);
       haptic.success();
       toast.success(`Welcome back, ${r.user.name.split(' ')[0]}!`);
-      if (router.canGoBack()) router.back();
+      if (next === 'delete-account') router.dismissTo('/delete-account');
+      else if (router.canGoBack()) router.back();
       else router.replace('/account');
     } catch (e) {
       haptic.error();

@@ -23,7 +23,7 @@ import { openQuickAdd } from '@/store/quick-add';
 import { Button, Icon, IconButton, PressableScale, SectionTitle, Skeleton, StatusDot, T } from '@/components/ui';
 import { greeting } from '@/lib/format';
 import type { Product } from '@/lib/types';
-import { cartCount, useAuth, useCart, useCatalog, useUi } from '@/store';
+import { cartCount, useAuth, useCart, useCatalog } from '@/store';
 import { colors, fonts, radius, space } from '@/theme';
 import { usePage } from '@/lib/pages';
 import { ExtraSections } from '@/components/page-content';
@@ -38,7 +38,6 @@ export default function HomeScreen() {
   const { store, products, categories, status, load } = useCatalog();
   const user = useAuth((s) => s.user);
   const bagCount = useCart((s) => cartCount(s.lines));
-  const introDone = useUi((s) => s.introDone);
 
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -84,44 +83,40 @@ export default function HomeScreen() {
 
             <Animated.View style={[styles.heroContent, { paddingTop: insets.top + 90 }, heroContentStyle]}>
               <Contained style={{ paddingHorizontal: space.xl, flex: 1, justifyContent: 'flex-end', paddingBottom: 36 }}>
-                {introDone && (
-                  <>
-                    <Animated.View entering={FadeInDown.duration(700)}>
-                      <T variant="overline" style={{ color: colors.goldLight }}>{c.text('hero.overline', 'Globally sourced · Locally roasted')}</T>
-                    </Animated.View>
-                    <Animated.Text entering={FadeInDown.delay(120).duration(800).springify().damping(18)} style={[styles.heroTitle, width > 700 && { fontSize: 64, lineHeight: 70 }]}>
-                      {c.text('hero.title', 'Exceptional Coffee,')}
-                    </Animated.Text>
-                    <Animated.Text entering={FadeInDown.delay(260).duration(800).springify().damping(18)} style={[styles.heroTitleGold, width > 700 && { fontSize: 64, lineHeight: 72 }]}>
-                      {c.text('hero.title_highlight', 'Crafted for You')}
-                    </Animated.Text>
-                    <Animated.View entering={FadeInDown.delay(400).duration(700)}>
-                      <T variant="body" style={styles.heroSub}>
-                        {c.text('hero.subtitle', 'Hand-selected beans, roasted in small batches for maximum freshness.')}
-                      </T>
-                    </Animated.View>
-                    <Animated.View entering={FadeInDown.delay(540).duration(700)} style={styles.heroCtas}>
-                      <Button title="Order Now" icon="shopping-bag" onPress={() => router.navigate('/menu')} style={{ flex: 1 }} />
-                      <Button title="Our Story" variant="outline" onPress={() => router.push('/about')} style={{ flex: 1 }} />
-                    </Animated.View>
-                    {store && (
-                      <Animated.View entering={FadeInDown.delay(680).duration(700)}>
-                        <PressableScale onPress={() => Linking.openURL(store.directions_url)} style={styles.statusCard}>
-                          <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
-                          <View style={styles.statusRow}>
-                            <StatusDot open={store.status.open} />
-                            <Text style={[styles.statusLabel, { color: store.status.open ? colors.success : colors.danger }]}>{store.status.label}</Text>
-                            <Text style={styles.statusDetail}>· {store.status.detail}</Text>
-                          </View>
-                          <View style={styles.statusRow}>
-                            <Icon name="map-pin" size={13} color={colors.creamMuted} />
-                            <Text style={styles.statusAddress} numberOfLines={1}>{store.address}</Text>
-                            <Icon name="navigation" size={14} color={colors.gold} />
-                          </View>
-                        </PressableScale>
-                      </Animated.View>
-                    )}
-                  </>
+                <Animated.View entering={FadeInDown.duration(700)}>
+                  <T variant="overline" style={{ color: colors.goldLight }}>{c.text('hero.overline', 'Globally sourced · Locally roasted')}</T>
+                </Animated.View>
+                <Animated.Text entering={FadeInDown.delay(120).duration(800).springify().damping(18)} style={[styles.heroTitle, width > 700 && { fontSize: 64, lineHeight: 70 }]}>
+                  {c.text('hero.title', 'Exceptional Coffee,')}
+                </Animated.Text>
+                <Animated.Text entering={FadeInDown.delay(260).duration(800).springify().damping(18)} style={[styles.heroTitleGold, width > 700 && { fontSize: 64, lineHeight: 72 }]}>
+                  {c.text('hero.title_highlight', 'Crafted for You')}
+                </Animated.Text>
+                <Animated.View entering={FadeInDown.delay(400).duration(700)}>
+                  <T variant="body" style={styles.heroSub}>
+                    {c.text('hero.subtitle', 'Hand-selected beans, roasted in small batches for maximum freshness.')}
+                  </T>
+                </Animated.View>
+                <Animated.View entering={FadeInDown.delay(540).duration(700)} style={styles.heroCtas}>
+                  <Button title="Order Now" icon="shopping-bag" onPress={() => router.navigate('/menu')} style={{ flex: 1 }} />
+                  <Button title="Our Story" variant="outline" onPress={() => router.push('/about')} style={{ flex: 1 }} />
+                </Animated.View>
+                {store && (
+                  <Animated.View entering={FadeInDown.delay(680).duration(700)}>
+                    <PressableScale onPress={() => Linking.openURL(store.directions_url)} style={styles.statusCard}>
+                      <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} />
+                      <View style={styles.statusRow}>
+                        <StatusDot open={store.status.open} />
+                        <Text style={[styles.statusLabel, { color: store.status.open ? colors.success : colors.danger }]}>{store.status.label}</Text>
+                        <Text style={styles.statusDetail}>· {store.status.detail}</Text>
+                      </View>
+                      <View style={styles.statusRow}>
+                        <Icon name="map-pin" size={13} color={colors.creamMuted} />
+                        <Text style={styles.statusAddress} numberOfLines={1}>{store.address}</Text>
+                        <Icon name="navigation" size={14} color={colors.gold} />
+                      </View>
+                    </PressableScale>
+                  </Animated.View>
                 )}
               </Contained>
             </Animated.View>

@@ -1,11 +1,12 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
-import { first, query, nowUtc } from '../db.js';
+import { first, query, nowUtc, transaction } from '../db.js';
 import { fail, requireString, optionalString, isEmail } from '../lib/http.js';
 import { checkPassword, hashPassword, publicUser, requireUser, signUserToken } from '../lib/auth.js';
 import { sendMail } from '../lib/mail.js';
 import { config } from '../config.js';
+import { notifyAdmins } from '../lib/notify.js';
 
 export const authRoutes = Router();
 
@@ -145,9 +146,54 @@ authRoutes.put('/auth/password', requireUser, async (req, res) => {
 });
 
 authRoutes.delete('/auth/me', requireUser, async (req, res) => {
-  if (['admin', 'super_admin'].includes(req.user.role)) fail(403, 'Staff accounts cannot be deleted from the app.');
-  if (!(await checkPassword(String(req.body?.password ?? ''), req.user.password))) fail(422, 'Your password is incorrect.');
-  if (await first('SELECT id FROM coffee_subscriptions WHERE user_id = ? LIMIT 1', [req.user.id])) fail(422, 'Please contact the shop to close your account and reconcile your subscription billing.');
-  await query('DELETE FROM users WHERE id = ?', [req.user.id]);
-  res.json({ message: 'Your account has been deleted.' });
+  const password = req.body?.password;
+  if (typeof password !== 'string' || password.length > 255 || !(await checkPassword(password, req.user.password))) {
+    fail(422, 'Your password is incorrect.');
+  }
+
+  const result = await transaction(async (conn) => {
+    const [[user]] = await conn.query('SELECT id, email, password, role FROM users WHERE id = ? FOR UPDATE', [req.user.id]);
+    if (!user || user.password !== req.user.password) fail(401, 'Please sign in again to continue.');
+
+    const [[subscription]] = await conn.query('SELECT id FROM coffee_subscriptions WHERE user_id = ? LIMIT 1', [user.id]);
+    const [[order]] = await conn.query('SELECT id FROM orders WHERE user_id = ? LIMIT 1', [user.id]);
+    // Staff resolve fulfillment, recurring billing and required record retention before closing these accounts.
+    if (subscription || order || user.role !== 'customer') {
+      const [[existing]] = await conn.query(
+        "SELECT ticket_number FROM support_tickets WHERE user_id = ? AND subject = 'Account deletion request' AND ticket_number LIKE 'DEL-%' AND status IN ('open', 'in_progress') LIMIT 1",
+        [user.id],
+      );
+      if (existing) return { status: 'requested', reference: existing.ticket_number };
+
+      const reference = 'DEL-' + crypto.randomBytes(8).toString('hex').toUpperCase();
+      const now = nowUtc();
+      const [ticket] = await conn.query(
+        "INSERT INTO support_tickets (user_id, ticket_number, subject, message, status, priority, created_at, updated_at) VALUES (?, ?, 'Account deletion request', ?, 'open', 'high', ?, ?)",
+        [user.id, reference, 'The verified account holder requested deletion of the account and associated personal data. Review any orders, subscription billing and required record retention before completing deletion.', now, now],
+      );
+      return { status: 'requested', reference, ticketId: ticket.insertId };
+    }
+
+    await conn.query('DELETE FROM sessions WHERE user_id = ?', [user.id]);
+    await conn.query('DELETE FROM password_reset_tokens WHERE email = ?', [user.email]);
+    await conn.query('DELETE FROM users WHERE id = ?', [user.id]);
+    return { status: 'deleted' };
+  });
+
+  if (result.status === 'requested') {
+    if (result.ticketId) {
+      const subject = 'Account deletion request ' + result.reference;
+      await notifyAdmins('NewSupportTicket', {
+        kind: 'support_ticket', title: subject, message: 'Review the verified deletion request in Support Tickets.',
+        url: '/admin/tickets/' + result.ticketId,
+      });
+      await sendMail({ to: config.store.email, subject, text: 'Review this request in the Sweet Eye Coffee support ticket queue.' });
+    }
+    return res.status(202).json({
+      status: result.status,
+      reference: result.reference,
+      message: 'Your deletion request was received. Our team will review it and follow up using your account email.',
+    });
+  }
+  res.json({ status: result.status, message: 'Your account has been deleted.' });
 });

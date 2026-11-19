@@ -27,6 +27,7 @@ export default function LegalScreen() {
           <T variant="body">{c.text('hero.subtitle')}</T>
           <T variant="small">Last updated: {c.text('body.updated')}</T>
           <RichText text={c.text('body.text')} />
+          {page === 'privacy' && <Button title="Request account deletion" variant="outline" onPress={() => router.push('/delete-account')} />}
           <ExtraSections sections={c.sections} />
         </View>
       ) : (

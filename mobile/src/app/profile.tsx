@@ -1,27 +1,25 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PageScreen } from '@/components/layout';
 import { toast } from '@/components/toast';
 import { Button, Card, Field, T } from '@/components/ui';
-import { del, errorMessage, patch, put } from '@/lib/api';
+import { errorMessage, patch, put } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import type { User } from '@/lib/types';
 import { useAuth } from '@/store';
 import { colors, space } from '@/theme';
 
 export default function ProfileScreen() {
-  const { user, setUser, signIn, signOut } = useAuth();
+  const { user, ready, setUser, signIn } = useAuth();
   const [form, setForm] = useState({ name: user?.name ?? '', email: user?.email ?? '', phone: user?.phone ?? '', address: user?.address ?? '' });
   const [pw, setPw] = useState({ current_password: '', password: '' });
-  const [deletePw, setDeletePw] = useState('');
   const [emailPw, setEmailPw] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) router.replace('/auth/sign-in');
-  }, [user]);
+    if (ready && !user) router.replace('/auth/sign-in');
+  }, [ready, user]);
   if (!user) return null;
 
   const run = async (key: string, fn: () => Promise<void>) => {
@@ -55,24 +53,6 @@ export default function ProfileScreen() {
       toast.success('Password updated.');
     });
 
-  const deleteAccount = () => {
-    const go = () =>
-      run('delete', async () => {
-        await del('/auth/me', { password: deletePw });
-        await signOut();
-        toast.info('Your account has been deleted.');
-        router.replace('/');
-      });
-    if (Platform.OS === 'web') {
-      if (window.confirm('Delete your account and order history permanently?')) go();
-    } else {
-      Alert.alert('Delete account?', 'This permanently removes your account and order history.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: go },
-      ]);
-    }
-  };
-
   return (
     <PageScreen title="Profile" contentStyle={{ maxWidth: 640 }}>
       <Animated.View entering={FadeInDown} style={{ gap: 12 }}>
@@ -96,16 +76,13 @@ export default function ProfileScreen() {
         <Button title="Update password" variant="outline" loading={busy === 'password'} onPress={changePassword} />
       </Animated.View>
 
-      {!user.is_admin && (
-        <Animated.View entering={FadeInDown.delay(200)} style={{ marginTop: space.xxxl }}>
-          <Card style={{ gap: 12, borderColor: 'rgba(238,142,122,0.3)' }}>
-            <T variant="heading" style={{ color: colors.danger }}>Delete account</T>
-            <T variant="small">This permanently removes your account and order history. Enter your password to confirm.</T>
-            <Field label="Password" icon="lock" value={deletePw} onChangeText={setDeletePw} secureTextEntry />
-            <Button title="Delete my account" variant="dark" icon="trash-2" loading={busy === 'delete'} disabled={!deletePw} onPress={deleteAccount} />
-          </Card>
-        </Animated.View>
-      )}
+      <Animated.View entering={FadeInDown.delay(200)} style={{ marginTop: space.xxxl }}>
+        <Card style={{ gap: 12, borderColor: 'rgba(238,142,122,0.3)' }}>
+          <T variant="heading" style={{ color: colors.danger }}>Delete account</T>
+          <T variant="small">Request permanent deletion of your Sweet Eye Coffee account and associated personal data.</T>
+          <Button title="Delete account" variant="dark" icon="trash-2" onPress={() => router.push('/delete-account')} />
+        </Card>
+      </Animated.View>
     </PageScreen>
   );
 }

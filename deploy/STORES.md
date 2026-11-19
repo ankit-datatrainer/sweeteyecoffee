@@ -1,68 +1,64 @@
-# Publishing the iOS and Android apps
+# Publish Sweet Eye Coffee on Apple and Google Play
 
-The store apps are built in the cloud with **EAS** (Expo Application Services) — no Mac or Android Studio needed. Do the VPS deployment (`deploy/DEPLOY.md`) first: the store apps talk to `https://app.sweeteyecoffee.com`.
+The app uses React Native and Expo SDK 58. You can start both signed cloud builds from Windows. The blank **Build** section in App Store Connect needs a signed iOS build uploaded and selected. The iOS and Android identifiers are both `com.sweeteyecoffee.app`.
 
-## What you need
+## 1. Verify the release settings
 
-- An **Apple Developer** account ($99/year) and a **Google Play Console** account ($25 once).
-- A free **Expo** account: https://expo.dev/signup
-- Your site live on HTTPS, plus these public pages (Apple and Google both check them):
-  - privacy policy — the app links to `https://sweeteyecoffee.com/privacy-policy`
-  - account deletion — the app has **Account → Profile → Delete account**; Google also wants a web page that explains how to ask for deletion (a short page with the support email is enough), e.g. `https://sweeteyecoffee.com/delete-account`
+- Keep the existing Apple record, **Sweet Eye Coffee House**, and confirm its registered bundle ID matches `com.sweeteyecoffee.app`. Use the existing Google Play listing for that same Android package. The app displays **Sweet Eye Coffee** on the device.
+- Both production build profiles use `https://app.sweeteyecoffee.com`. The app supports iPhone and iPad. Expo SDK 58 sets Android target API 36. EAS selects the SDK-compatible Xcode image. Check the actual build logs and the Play bundle report for the target API and 16 KB support before release. [Google target API](https://support.google.com/googleplay/android-developer/answer/11926878) · [Android 16 KB checks](https://developer.android.com/guide/practices/page-sizes) · [Apple SDK requirements](https://developer.apple.com/news/upcoming-requirements/) · [Expo SDK 58](https://docs.expo.dev/versions/v58.0.0/)
+- Confirm the support inbox is monitored and that deletion tickets with a `DEL-` reference have an assigned owner. Resolve open fulfillment or subscription billing before deleting associated data, retain only records needed for fulfillment, disputes or legal obligations, review records held by payment and delivery providers, and confirm completion to the account holder. These requests appear in the existing support ticket queue and generate a staff notification. [Apple account deletion](https://developer.apple.com/help/app-review/guideline-reference/5-1-1-account-deletion/) · [Google account deletion](https://support.google.com/googleplay/android-developer/answer/13327111)
 
-## 1. One-time setup
+## 2. Build the signed files on Windows
 
-`mobile/eas.json` already points the apps at `https://app.sweeteyecoffee.com`. In the `mobile` folder:
+Open PowerShell from the project directory. Sign in to the Expo account or organization that owns this app. If an Expo project already exists, link that project rather than registering a duplicate. Enter credentials and verification codes only in the provider's sign-in prompt.
 
-```bash
-npm install -g eas-cli
-eas login
-eas init            # links the project to your Expo account (adds the project id to app.json)
+```powershell
+cd mobile
+npx eas-cli@latest login
+npx eas-cli@latest whoami
+npx eas-cli@latest init
+npx eas-cli@latest build --platform ios --profile production
+npx eas-cli@latest build --platform android --profile production
 ```
 
-## 2. Build
+Select the Apple team that owns your existing App Store Connect record and confirm the bundle ID. Use the existing signing credentials if a build has already been uploaded. For a first Play upload, use Play App Signing and keep the upload key backed up. The build links return an **iOS .ipa** and an **Android .aab**. The production profile increments build numbers remotely. [EAS Build setup](https://docs.expo.dev/build/setup/)
 
-```bash
-eas build --platform ios --profile production
-eas build --platform android --profile production
-```
+## 3. Upload, install and smoke-test both builds
 
-EAS asks to create the iOS certificates and the Android signing key the first time — say yes and let it manage them. Build numbers go up automatically on every build.
+1. **Apple**. Run `npx eas-cli@latest submit --platform ios` from `mobile` and choose the successful production build. Use the numeric App Store Connect app ID from the existing record if prompted. Wait for processing, install from TestFlight, then return to **iOS App Version 1.0 → Build** and select the processed build. [Expo Submit for iOS](https://docs.expo.dev/submit/ios/)
+2. **Google Play**. Open **Testing → Internal testing**, create a release and upload the signed `.aab`. Follow the Play App Signing prompt. After the first manual upload, EAS Submit can handle later uploads once a Google service account is configured. If Play requires closed testing for a new personal developer account, keep at least 12 testers opted in continuously for 14 days and apply for production access before release. [Expo Submit for Android](https://docs.expo.dev/submit/android/) · [Google testing requirements](https://support.google.com/googleplay/android-developer/answer/14151465)
+3. Test on iPhone, iPad and Android using the signed builds. Browse categories, switch an Americano from Hot to Iced, customize it, check bag pricing, review pickup and delivery options, test account creation, sign-in, password reset and deletion with disposable accounts, and confirm staff can select a single image without granting broad photo access. Test payment and fulfillment with approved sandbox settings. Verify the signed Android bundle in Play Console and on a 16 KB environment. Capture native screenshots from these builds using the six views in the kit.
 
-To try a build on your own phones first: `eas build --profile preview` (Android gives an installable `.apk`; iOS needs your device registered with `eas device:create`).
+## 4. Add the graphics and listing details
 
-## 3. Submit
+| Upload field | Asset |
+| --- | --- |
+| Play Console → Main store listing → App icon | Google Play app icon 512.png |
+| Play Console → Main store listing → Feature graphic | Google Play feature graphic 1024x500.png |
+| Play Console → Phone screenshots | Six portrait screens in Android Phone, 1080 × 1920 |
+| App Store Connect → iPhone with Dynamic Island (medium) | Six portrait screens in iPhone 6.3, 1206 × 2622 |
+| App Store Connect → iPhone with Dynamic Island (large), optional | Six portrait screens in iPhone 6.9, 1320 × 2868 |
+| App Store Connect → iPad 13-inch | Six portrait screens in iPad 13, 2064 × 2752 |
+| Apple app icon | Included in the iOS build from mobile/assets/images/icon.png |
+| Website or social promotion | Wide promotion banner 1600x900.png |
 
-```bash
-eas submit --platform ios --latest
-eas submit --platform android --latest
-```
+The kit has plain app captures and promotional compositions in all four sizes. These were captured from the responsive Expo web app. Verify them against the signed native builds and use native captures for final submission, particularly where the system or native UI differs. The six views are Home, Hot and iced menu, Customize a drink, Shop coffee beans, Review your bag, and Choose pickup. Use one version of each view in a listing. The wide promotion banner is for external marketing. [Apple screenshot sizes](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications) · [Apple screenshots in use](https://developer.apple.com/help/app-review/guideline-reference/2-3-3-screenshots/) · [Google preview assets](https://support.google.com/googleplay/android-developer/answer/9866151)
 
-iOS goes to App Store Connect (TestFlight first); Android goes to the Play **internal testing** track as a draft. Promote them to production in the consoles when you're happy.
+Suggested listing text is in the kit. Choose **Food & Drink**, complete the content and age rating questionnaires, and provide the reviewer a working, ordinary customer account in the private App Review or App access fields. Verify it works without extra authentication. Give reviewers the reproducible steps to browse as a guest, customize an item, view the bag and find deletion under **Account → Profile → Delete account**. Provide any access details for staff-only screens if the reviewer needs them.
 
-## 4. Store listing answers
+## 5. Complete privacy, app content and review
 
-**App Store Connect → App Privacy** and **Play Console → Data safety** — data collected, linked to the user, not used for tracking, not sold:
+- **Privacy policy**. Enter `https://app.sweeteyecoffee.com/legal/privacy`. **Account deletion URL for Google**. Enter `https://app.sweeteyecoffee.com/delete-account` after opening it publicly and checking that sign-in returns to the deletion form. **Support URL**. Enter `https://app.sweeteyecoffee.com/contact`.
+- Review the App Privacy and Data safety questionnaires using the table below. Base the final answers on the signed release, your production configuration and your processor contracts. The app's payment forms handle physical products. Square and Stripe handle card or wallet data, and UPS may receive shipping data. [Apple App Privacy](https://developer.apple.com/app-store/app-privacy-details/) · [Google Data safety](https://support.google.com/googleplay/android-developer/answer/10787469) · [Apple review guidelines](https://developer.apple.com/app-store/review/guidelines/) · [Google payments policy](https://support.google.com/googleplay/android-developer/answer/9858738)
 
-| Data | Why |
-|---|---|
-| Name, email, phone | Account and order contact |
-| Delivery address | Coffee-bean delivery orders |
-| Purchase history | Order tracking and history |
-| Customer support messages | Support tickets / contact form |
-| Photos (staff only) | Menu item pictures uploaded by staff |
+| Data to review | Use and collection context |
+| --- | --- |
+| Name, email, phone and account ID | Account, login, guest checkout and order contact. Some fields are optional. |
+| Delivery address and pickup details | Delivery fulfillment and curbside pickup. Delivery data may go to the carrier. |
+| Orders, quantities, price and payment references | Order history and fulfillment. Card entry is handled by the payment provider. Confirm each store's processor and payment-data disclosure rules. |
+| Support messages and order notes | User-submitted support and order information. |
+| Selected staff photos | A staff member selects a photo to upload to the catalog or a shop page. The customer flow does not ask for photos. |
+| Device, diagnostic and network data | Check server logs and production third-party SDK behavior for fields the store expects you to disclose. |
 
-Card and wallet details are entered on Square's and Stripe's own forms and never reach the app's server.
-
-**Encryption:** the app only uses standard HTTPS — it's declared exempt in `app.json`, so App Store Connect won't ask on each build.
-
-**Content rating:** Everyone / 4+ (no user-generated public content, no gambling, no mature content).
-
-**Review notes** (both stores) — give the reviewers:
-- A normal customer login (create one in the app, e.g. `review@sweeteyecoffee.com`).
-- "Payments are real (Square / Stripe). Physical goods — coffee and food picked up in store or shipped. Staff dashboard is for employees only."
-- Optionally a staff login if you want them to see the dashboard.
-
-## Screenshots
-
-Take them from the preview build or a simulator: iPhone 6.9" and 6.5", iPad 13" (the app supports iPad), and Android phone. 3–5 screens: Home, Menu, Product, Bag/Checkout, Order tracking.
+- **Apple export compliance**. The project currently sets `ITSAppUsesNonExemptEncryption` to false for standard system encryption. Review the encryption declaration and linked SDKs with the account owner before submitting. Respond to any App Store Connect prompts using the actual build. [Apple export compliance](https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/)
+- **Release**. On Apple select the processed build and use **Add for Review** after completing the mandatory fields. On Google finish **App content**, **Data safety**, **App access**, store listing, pricing and countries, then request production access or submit the production release as shown in your console. Keep the store declarations consistent with the feature availability in production. Subscription billing depends on its separate Stripe setup.

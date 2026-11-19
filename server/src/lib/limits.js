@@ -47,3 +47,4 @@ export const LIMITS = {
 /** Everything else under /api, and the Stripe return page (it calls Stripe each time). */
 export const apiLimit = limit(15, 1500, 'requests');
 export const stripeReturnLimit = limit(15, 60, 'requests');
+export const accountDeletionLimit = limit(15, 10, 'account deletion attempts', failuresOnly);

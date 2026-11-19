@@ -161,11 +161,3 @@ export const useAuth = create<AuthState>((set) => ({
     set({ user: null });
   },
 }));
-
-// ── UI flags ────────────────────────────────────────────────────────────────
-
-/** Lets screens hold their entrance animations until the launch curtain has lifted. */
-export const useUi = create<{ introDone: boolean; setIntroDone: () => void }>((set) => ({
-  introDone: false,
-  setIntroDone: () => set({ introDone: true }),
-}));

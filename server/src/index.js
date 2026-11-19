@@ -14,7 +14,7 @@ import { pool } from './db.js';
 import { HttpError } from './lib/http.js';
 import { attachUser, requireAdmin } from './lib/auth.js';
 import { serveImage, warmImageCache } from './lib/images.js';
-import { LIMITS, apiLimit, stripeReturnLimit } from './lib/limits.js';
+import { LIMITS, accountDeletionLimit, apiLimit, stripeReturnLimit } from './lib/limits.js';
 import { catalogRoutes } from './routes/catalog.js';
 import { authRoutes } from './routes/auth.js';
 import { checkoutRoutes } from './routes/checkout.js';
@@ -77,6 +77,7 @@ app.use(express.json({ limit: '200kb' }));
 // Rate limits (after parsing, so sign-in / reset can also be limited per email).
 app.use('/api', apiLimit);
 app.get('/api/stripe/return', stripeReturnLimit);
+app.delete('/api/auth/me', accountDeletionLimit);
 for (const [route, limiters] of Object.entries(LIMITS)) app.post(route, ...limiters);
 
 // Menu photos: resized WebP for ?w=…, otherwise the original file with its true content type.

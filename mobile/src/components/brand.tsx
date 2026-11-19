@@ -3,19 +3,16 @@ import { useEffect } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
-  FadeIn,
   interpolate,
   useAnimatedProps,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
-import { colors, fonts } from '@/theme';
+import { colors } from '@/theme';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
@@ -145,61 +142,6 @@ function Orb({ color }: { color: string }) {
   );
 }
 
-/**
- * Launch sequence: the mark draws itself, the wordmark rises in, then the
- * whole curtain lifts away to reveal the app.
- */
-export function IntroOverlay({ onDone }: { onDone: () => void }) {
-  const exit = useSharedValue(0);
-  const word = useSharedValue(0);
-
-  useEffect(() => {
-    word.value = withDelay(900, withTiming(1, { duration: 700, easing: Easing.out(Easing.cubic) }));
-    exit.value = withDelay(
-      2100,
-      withSequence(withTiming(1, { duration: 650, easing: Easing.inOut(Easing.cubic) }, (done) => {
-        if (done) scheduleOnRN(onDone);
-      })),
-    );
-    // Safety net: never trap the user behind the curtain if frames are throttled (background tab, slow device).
-    const fallback = setTimeout(onDone, 3400);
-    return () => clearTimeout(fallback);
-  }, [exit, word, onDone]);
-
-  const curtain = useAnimatedStyle(() => ({
-    opacity: interpolate(exit.value, [0, 0.6, 1], [1, 1, 0]),
-    transform: [{ translateY: interpolate(exit.value, [0, 1], [0, -60]) }],
-  }));
-  const content = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(exit.value, [0, 1], [1, 1.12]) }],
-    opacity: interpolate(exit.value, [0, 0.5], [1, 0], 'clamp'),
-  }));
-  const wordStyle = useAnimatedStyle(() => ({
-    opacity: word.value,
-    transform: [{ translateY: interpolate(word.value, [0, 1], [18, 0]) }],
-  }));
-
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.intro, curtain]}>
-      <AmbientGlow intensity={1.2} />
-      <Animated.View style={[{ alignItems: 'center' }, content]}>
-        <BrandMark size={130} />
-        <Animated.View style={[{ alignItems: 'center', marginTop: 10 }, wordStyle]}>
-          <Animated.Text style={styles.introTitle}>Sweet Eye</Animated.Text>
-          <Animated.Text style={styles.introSub}>COFFEE ROASTERS</Animated.Text>
-        </Animated.View>
-      </Animated.View>
-      <Animated.Text entering={FadeIn.delay(1300).duration(600)} style={styles.introFoot}>
-        Globally sourced · Locally roasted
-      </Animated.Text>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   orb: { position: 'absolute', width: 460, height: 460 },
-  intro: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', zIndex: 100 },
-  introTitle: { fontFamily: fonts.display, fontSize: 40, color: colors.cream, letterSpacing: 0.5 },
-  introSub: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 6, color: colors.gold, marginTop: 6 },
-  introFoot: { position: 'absolute', bottom: 64, fontFamily: fonts.displayItalic, fontSize: 15, color: colors.creamMuted },
 });
